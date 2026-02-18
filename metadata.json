@@ -1,0 +1,5 @@
+{
+  "name": "Solicitação de NF de Transporte",
+  "description": "Aplicativo para gerar solicitações de Nota Fiscal de transporte via WhatsApp, com gestão de imobilizados e veículos.",
+  "requestFramePermissions": []
+}
