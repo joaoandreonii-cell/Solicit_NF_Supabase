@@ -22,9 +22,9 @@ export interface TripFormData {
   destinationCity: string;
   driverName: string;
   vehiclePlate: string;
-  totalWeight: string;
-  volume: string;
-  hasOtherMaterials: 'Sim' | 'Não';
+  totalWeight: number;
+  volume: number;
+  hasOtherMaterials?: 'Sim' | 'Não';
   returnDate: string;
   returnTime: string;
   observations: string; // New field

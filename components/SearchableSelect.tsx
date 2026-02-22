@@ -8,6 +8,7 @@ interface Option {
 }
 
 interface SearchableSelectProps {
+  id?: string;
   options: Option[];
   value: string;
   onChange: (value: string) => void;
@@ -15,6 +16,7 @@ interface SearchableSelectProps {
   label?: string;
   className?: string;
   inputClassName?: string;
+  error?: boolean;
 }
 
 // Helper function to normalize text (remove accents and convert to lowercase)
@@ -26,13 +28,15 @@ const normalizeText = (text: string) => {
 };
 
 export const SearchableSelect: React.FC<SearchableSelectProps> = ({
+  id,
   options,
   value,
   onChange,
   placeholder = "Selecione...",
   label,
   className = "",
-  inputClassName = ""
+  inputClassName = "",
+  error
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -75,7 +79,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
     const normalizedSubLabel = opt.subLabel ? normalizeText(opt.subLabel) : '';
 
     return normalizedLabel.includes(normalizedSearch) ||
-           normalizedSubLabel.includes(normalizedSearch);
+      normalizedSubLabel.includes(normalizedSearch);
   });
 
   const handleSelect = (option: Option) => {
@@ -93,12 +97,13 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
 
   return (
     <div className={`relative ${className}`} ref={wrapperRef}>
-      {label && <label className="block text-xs font-semibold text-gray-700 mb-1">{label}</label>}
+      {label && <label htmlFor={id} className="block text-xs font-semibold text-gray-700 mb-1">{label}</label>}
       <div className="relative">
         <input
           ref={inputRef}
+          id={id}
           type="text"
-          className={`w-full bg-white text-slate-900 border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 pr-8 placeholder-gray-400 ${inputClassName}`}
+          className={`w-full bg-white text-slate-900 border rounded-md shadow-sm focus:ring-blue-500 p-2 pr-8 placeholder-gray-400 ${error ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'} ${inputClassName}`}
           placeholder={placeholder}
           value={searchTerm}
           onChange={(e) => {

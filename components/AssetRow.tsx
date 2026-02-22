@@ -19,11 +19,12 @@ export const AssetRow: React.FC<AssetRowProps> = ({ item, assets, onUpdate, onRe
 
   return (
     <div className="flex flex-col p-3 border rounded-lg bg-white shadow-sm mb-2 border-slate-200">
-      
+
       {/* Top Row: Description (Searchable) */}
       <div className="w-full mb-2">
-        <label className="block text-xs font-semibold text-slate-700 mb-1">Descrição</label>
+        <label htmlFor={`asset-desc-${item.id}`} className="block text-xs font-semibold text-slate-700 mb-1">Descrição</label>
         <SearchableSelect
+          id={`asset-desc-${item.id}`}
           options={assetOptions}
           value={item.assetCode}
           onChange={(val) => onUpdate(item.id, 'assetCode', val)}
@@ -35,12 +36,13 @@ export const AssetRow: React.FC<AssetRowProps> = ({ item, assets, onUpdate, onRe
 
       {/* Bottom Row: Code (Auto) + Qty + Delete */}
       <div className="flex items-end gap-2">
-        
+
         {/* Code Display */}
         <div className="flex-grow">
-           <label className="block text-xs font-semibold text-slate-700 mb-1">Código</label>
-           <input
+          <label htmlFor={`asset-code-${item.id}`} className="block text-xs font-semibold text-slate-700 mb-1">Código</label>
+          <input
             type="text"
+            id={`asset-code-${item.id}`}
             value={item.assetCode}
             readOnly
             disabled
@@ -51,9 +53,10 @@ export const AssetRow: React.FC<AssetRowProps> = ({ item, assets, onUpdate, onRe
 
         {/* Quantity */}
         <div className="w-20">
-          <label className="block text-xs font-semibold text-slate-700 mb-1">Qtd.</label>
+          <label htmlFor={`asset-qty-${item.id}`} className="block text-xs font-semibold text-slate-700 mb-1">Qtd.</label>
           <input
             type="number"
+            id={`asset-qty-${item.id}`}
             min="1"
             value={item.quantity}
             onChange={(e) => onUpdate(item.id, 'quantity', parseInt(e.target.value) || 0)}
