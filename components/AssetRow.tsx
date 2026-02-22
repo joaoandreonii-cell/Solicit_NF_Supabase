@@ -14,7 +14,7 @@ export const AssetRow: React.FC<AssetRowProps> = ({ item, assets, onUpdate, onRe
   const assetOptions = assets.map(a => ({
     value: a.fiscalCode,
     label: a.description,
-    subLabel: a.fiscalCode // Show fiscal code in search results
+    subLabel: `${a.fiscalCode} | ${a.patrimony}` // Show both in search results
   }));
 
   return (
@@ -26,8 +26,8 @@ export const AssetRow: React.FC<AssetRowProps> = ({ item, assets, onUpdate, onRe
         <SearchableSelect
           id={`asset-desc-${item.id}`}
           options={assetOptions}
-          value={item.assetCode}
-          onChange={(val) => onUpdate(item.id, 'assetCode', val)}
+          value={item.assetFiscalCode}
+          onChange={(val) => onUpdate(item.id, 'assetFiscalCode', val)}
           placeholder="Digite para buscar..."
           className="w-full"
           inputClassName="sm:text-sm h-9"
@@ -37,27 +37,13 @@ export const AssetRow: React.FC<AssetRowProps> = ({ item, assets, onUpdate, onRe
       {/* Bottom Row: Code (Auto) + Qty + Delete */}
       <div className="flex items-end gap-2">
 
-        {/* Fiscal Code Display */}
+        {/* Code Display */}
         <div className="flex-grow">
-          <label htmlFor={`asset-fcode-${item.id}`} className="block text-xs font-semibold text-slate-700 mb-1">Cód. Fiscal</label>
+          <label htmlFor={`asset-code-${item.id}`} className="block text-xs font-semibold text-slate-700 mb-1">Cód. Fiscal</label>
           <input
             type="text"
-            id={`asset-fcode-${item.id}`}
-            value={item.assetCode}
-            readOnly
-            disabled
-            className="w-full bg-slate-100 text-slate-600 border border-gray-300 rounded-md sm:text-sm p-2 cursor-not-allowed h-9"
-            placeholder="-"
-          />
-        </div>
-
-        {/* Patrimony Display */}
-        <div className="flex-grow">
-          <label htmlFor={`asset-patrimony-${item.id}`} className="block text-xs font-semibold text-slate-700 mb-1">Patrimônio</label>
-          <input
-            type="text"
-            id={`asset-patrimony-${item.id}`}
-            value={assets.find(a => a.fiscalCode === item.assetCode)?.patrimony || '-'}
+            id={`asset-code-${item.id}`}
+            value={item.assetFiscalCode}
             readOnly
             disabled
             className="w-full bg-slate-100 text-slate-600 border border-gray-300 rounded-md sm:text-sm p-2 cursor-not-allowed h-9"

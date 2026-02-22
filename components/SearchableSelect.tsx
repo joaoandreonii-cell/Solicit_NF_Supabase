@@ -17,7 +17,6 @@ interface SearchableSelectProps {
   className?: string;
   inputClassName?: string;
   error?: boolean;
-  allowCustomValue?: boolean;
 }
 
 // Helper function to normalize text (remove accents and convert to lowercase)
@@ -37,8 +36,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   label,
   className = "",
   inputClassName = "",
-  error,
-  allowCustomValue = false
+  error
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -111,13 +109,8 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
           onChange={(e) => {
             setSearchTerm(e.target.value);
             if (!isOpen) setIsOpen(true);
-            // If custom value allowed, update parent on every keystroke
-            if (allowCustomValue) {
-              onChange(e.target.value);
-            } else if (e.target.value === '') {
-              // If user clears text, clear value (standard behavior)
-              onChange('');
-            }
+            // If user clears text, clear value
+            if (e.target.value === '') onChange('');
           }}
           onFocus={() => {
             setIsOpen(true);
@@ -142,51 +135,28 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
       {isOpen && (
         <div className="absolute z-50 w-full mt-1 bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
           {filteredOptions.length === 0 ? (
-            allowCustomValue && searchTerm ? (
-              <div
-                className="cursor-pointer select-none relative py-2 px-4 text-blue-600 hover:bg-blue-50 font-medium"
-                onClick={() => {
-                  handleSelect({ value: searchTerm, label: searchTerm });
-                }}
-              >
-                Adicionar: "{searchTerm}"
-              </div>
-            ) : (
-              <div className="cursor-default select-none relative py-2 px-4 text-gray-500">
-                Nenhum resultado encontrado.
-              </div>
-            )
+            <div className="cursor-default select-none relative py-2 px-4 text-gray-500">
+              Nenhum resultado encontrado.
+            </div>
           ) : (
-            <>
-              {filteredOptions.map((option) => (
-                <div
-                  key={option.value}
-                  className={`cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-blue-50 ${option.value === value ? 'bg-blue-100 text-blue-900' : 'text-gray-900'}`}
-                  onClick={() => handleSelect(option)}
-                >
-                  <div className="flex flex-col">
-                    <span className={`block truncate ${option.value === value ? 'font-semibold' : 'font-normal'}`}>
-                      {option.label}
+            filteredOptions.map((option) => (
+              <div
+                key={option.value}
+                className={`cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-blue-50 ${option.value === value ? 'bg-blue-100 text-blue-900' : 'text-gray-900'}`}
+                onClick={() => handleSelect(option)}
+              >
+                <div className="flex flex-col">
+                  <span className={`block truncate ${option.value === value ? 'font-semibold' : 'font-normal'}`}>
+                    {option.label}
+                  </span>
+                  {option.subLabel && (
+                    <span className="text-xs text-gray-500 truncate">
+                      {option.subLabel}
                     </span>
-                    {option.subLabel && (
-                      <span className="text-xs text-gray-500 truncate">
-                        {option.subLabel}
-                      </span>
-                    )}
-                  </div>
+                  )}
                 </div>
-              ))}
-              {allowCustomValue && searchTerm && !options.some(opt => normalizeText(opt.label) === normalizeText(searchTerm)) && (
-                <div
-                  className="cursor-pointer select-none relative py-2 px-4 text-blue-600 hover:bg-blue-50 font-medium border-t border-gray-100"
-                  onClick={() => {
-                    handleSelect({ value: searchTerm, label: searchTerm });
-                  }}
-                >
-                  Usar: "{searchTerm}"
-                </div>
-              )}
-            </>
+              </div>
+            ))
           )}
         </div>
       )}

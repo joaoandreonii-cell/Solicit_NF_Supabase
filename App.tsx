@@ -130,7 +130,7 @@ function AppContent() {
   const addAssetRow = () => {
     const newAsset: SelectedAsset = {
       id: crypto.randomUUID(),
-      assetCode: '',
+      assetFiscalCode: '',
       quantity: 1
     };
     setSelectedAssets(prev => [...prev, newAsset]);
@@ -191,10 +191,10 @@ function AppContent() {
   const generateMessageText = () => {
     const vehicle = vehicles.find(v => v.plate === formData.vehiclePlate);
     const assetListString = selectedAssets
-      .filter(item => item.assetCode)
+      .filter(item => item.assetFiscalCode)
       .map(item => {
-        const asset = assets.find(a => a.code === item.assetCode);
-        return `${item.quantity} - ${item.assetCode} - ${asset?.description || 'Item desconhecido'}`;
+        const asset = assets.find(a => a.fiscalCode === item.assetFiscalCode);
+        return `${item.quantity} - ${item.assetFiscalCode} - ${asset?.description || 'Item desconhecido'}`;
       })
       .join('\n');
 

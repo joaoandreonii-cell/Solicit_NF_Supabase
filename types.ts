@@ -13,7 +13,7 @@ export interface Vehicle {
 
 export interface SelectedAsset {
   id: string; // Unique ID for the row (for React keys)
-  assetCode: string;
+  assetFiscalCode: string;
   quantity: number;
 }
 
@@ -25,15 +25,15 @@ export interface TripFormData {
   destinationCity: string;
   driverName: string;
   vehiclePlate: string;
-  vehicleModel?: string; // New field
-  vehicleUnit?: string;  // New field
-  vehicleSector?: string; // New field
   totalWeight: number;
   volume: number;
   hasOtherMaterials?: 'Sim' | 'Não';
   returnDate: string;
   returnTime: string;
   observations: string; // New field
+  customVehicleModel?: string;
+  customVehicleUnit?: string;
+  customVehicleSector?: string;
 }
 
 export interface HistoryItem {

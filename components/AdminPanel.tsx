@@ -50,12 +50,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // --- New Item State ---
-  const [newAsset, setNewAsset] = useState<Asset>({ fiscalCode: '', patrimony: '-', description: '' });
+  const [newAsset, setNewAsset] = useState<Asset>({ fiscalCode: '', patrimony: '', description: '' });
   const [newVehicle, setNewVehicle] = useState<Vehicle>({ plate: '', model: '', unit: '', sector: '' });
 
   // --- Edit State ---
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState<{ field1: string; field2: string; field3?: string; field4?: string }>({ field1: '', field2: '', field3: '', field4: '' });
+  const [editValues, setEditValues] = useState<{ field1: string; field2: string; field3?: string; field4?: string; field5?: string }>({ field1: '', field2: '', field3: '', field4: '', field5: '' });
 
   // ---------------------------------------------------------------------------
   // AUTHENTICATION LOGIC
@@ -93,21 +93,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // ---------------------------------------------------------------------------
   // EDIT LOGIC
   // ---------------------------------------------------------------------------
-  const startEditing = (id: string, val1: string, val2: string, val3?: string, val4?: string) => {
+  const startEditing = (id: string, val1: string, val2: string, val3?: string, val4?: string, val5?: string) => {
     setEditingId(id);
-    setEditValues({ field1: val1, field2: val2, field3: val3 || '', field4: val4 || '' });
+    setEditValues({ field1: val1, field2: val2, field3: val3 || '', field4: val4 || '', field5: val5 || '' });
   };
 
   const cancelEditing = () => {
     setEditingId(null);
-    setEditValues({ field1: '', field2: '', field3: '', field4: '' });
+    setEditValues({ field1: '', field2: '', field3: '', field4: '', field5: '' });
   };
 
   const saveEdit = (oldId: string) => {
-    const { field1, field2, field3, field4 } = editValues;
+    const { field1, field2, field3, field4, field5 } = editValues;
 
     if (!field1.trim() || !field2.trim()) {
-      alert("Os campos Placa/Código e Modelo/Descrição não podem estar vazios.");
+      alert("Os campos obrigatórios não podem estar vazios.");
       return;
     }
 
@@ -117,7 +117,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         alert("Já existe um item com este código fiscal!");
         return;
       }
-      const updated = assets.map(a => a.fiscalCode === oldId ? { fiscalCode: field1, patrimony: field3, description: field2 } : a);
+      const updated = assets.map(a => a.fiscalCode === oldId ? { fiscalCode: field1, patrimony: field2, description: field3 } : a);
       onAssetsChange(updated);
     } else {
       // Check for duplicate plate (excluding current)
@@ -177,7 +177,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             const fCode = normalizedRow['codigofiscal'] || normalizedRow['fiscalcode'] || normalizedRow['codigo'] || normalizedRow['code'];
             const patrimony = normalizedRow['patrimonio'] || normalizedRow['patrimony'] || '-';
             const desc = normalizedRow['descricao'] || normalizedRow['description'] || normalizedRow['desc'];
-            if (fCode && desc) mappedAssets.push({ fiscalCode: String(fCode).trim(), patrimony: String(patrimony).trim(), description: String(desc).trim() });
+            if (fCode && desc) {
+              mappedAssets.push({
+                fiscalCode: String(fCode).trim(),
+                patrimony: String(patrimony).trim(),
+                description: String(desc).trim()
+              });
+            }
           });
           if (mappedAssets.length > 0 && confirm(`Importar ${mappedAssets.length} imobilizados?`)) onAssetsChange(mappedAssets);
         } else {
@@ -220,7 +226,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       if (!newAsset.fiscalCode || !newAsset.description) return alert("Preencha Código Fiscal e Descrição");
       if (assets.some(a => a.fiscalCode === newAsset.fiscalCode)) return alert("Já existe este código fiscal!");
       onAssetsChange([...assets, newAsset]);
-      setNewAsset({ fiscalCode: '', patrimony: '-', description: '' });
+      setNewAsset({ fiscalCode: '', patrimony: '', description: '' });
     } else {
       if (!newVehicle.plate || !newVehicle.model) return alert("Preencha Placa e Modelo");
       if (vehicles.some(v => v.plate === newVehicle.plate)) return alert("Já existe esta placa!");
@@ -303,8 +309,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2"><Plus size={14} /> Adicionar Manualmente</h3>
             {activeTab === 'assets' ? (
               <div className="flex flex-col md:flex-row gap-3">
-                <input type="text" placeholder="Código Fiscal" className={`${inputStyle} w-full md:w-1/4`} value={newAsset.fiscalCode} onChange={e => setNewAsset({ ...newAsset, fiscalCode: e.target.value })} />
-                <input type="text" placeholder="Patrimônio" className={`${inputStyle} w-full md:w-1/4`} value={newAsset.patrimony} onChange={e => setNewAsset({ ...newAsset, patrimony: e.target.value })} />
+                <input type="text" placeholder="Código Fiscal" className={`${inputStyle} w-full md:w-48`} value={newAsset.fiscalCode} onChange={e => setNewAsset({ ...newAsset, fiscalCode: e.target.value })} />
+                <input type="text" placeholder="Patrimônio" className={`${inputStyle} w-full md:w-48`} value={newAsset.patrimony} onChange={e => setNewAsset({ ...newAsset, patrimony: e.target.value })} />
                 <input type="text" placeholder="Descrição" className={`${inputStyle} w-full md:flex-1`} value={newAsset.description} onChange={e => setNewAsset({ ...newAsset, description: e.target.value })} />
                 <button onClick={handleAddManual} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition flex items-center justify-center"><Save size={18} /></button>
               </div>
@@ -326,7 +332,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase w-32">{activeTab === 'assets' ? 'Cód. Fiscal' : 'Placa'}</th>
                   {activeTab === 'assets' && (
-                    <th className="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase w-32">Patrimônio</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase w-48">Patrimônio</th>
                   )}
                   <th className="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase">{activeTab === 'assets' ? 'Descrição' : 'Modelo'}</th>
                   {activeTab === 'vehicles' && (
@@ -342,8 +348,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 {filteredList.map((item, idx) => {
                   const id = activeTab === 'assets' ? (item as Asset).fiscalCode : (item as Vehicle).plate;
                   const val1 = activeTab === 'assets' ? (item as Asset).fiscalCode : (item as Vehicle).plate;
-                  const val2 = activeTab === 'assets' ? (item as Asset).description : (item as Vehicle).model;
-                  const field3 = activeTab === 'assets' ? (item as Asset).patrimony : (item as Vehicle).unit;
+                  const val2 = activeTab === 'assets' ? (item as Asset).patrimony : (item as Vehicle).model;
+                  const val3 = activeTab === 'assets' ? (item as Asset).description : (item as Vehicle).unit;
+                  const val4 = activeTab === 'vehicles' ? (item as Vehicle).sector : undefined;
                   const isEditing = editingId === id;
 
                   return (
@@ -355,15 +362,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           <span className="font-mono text-slate-900">{val1}</span>
                         )}
                       </td>
-                      {activeTab === 'assets' && (
-                        <td className="px-6 py-3 text-sm">
-                          {isEditing ? (
-                            <input type="text" className="w-full border p-1 rounded bg-white text-slate-900" value={editValues.field3} onChange={e => setEditValues({ ...editValues, field3: e.target.value })} />
-                          ) : (
-                            <span className="text-slate-700">{(item as Asset).patrimony}</span>
-                          )}
-                        </td>
-                      )}
                       <td className="px-6 py-3 text-sm">
                         {isEditing ? (
                           <input type="text" className="w-full border p-1 rounded bg-white text-slate-900" value={editValues.field2} onChange={e => setEditValues({ ...editValues, field2: e.target.value })} />
@@ -371,23 +369,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           <span className="text-slate-700">{val2}</span>
                         )}
                       </td>
+                      <td className="px-6 py-3 text-sm">
+                        {isEditing ? (
+                          <input type="text" className="w-full border p-1 rounded bg-white text-slate-900" value={editValues.field3} onChange={e => setEditValues({ ...editValues, field3: e.target.value })} />
+                        ) : (
+                          <span className="text-slate-700">{val3}</span>
+                        )}
+                      </td>
                       {activeTab === 'vehicles' && (
-                        <>
-                          <td className="px-6 py-3 text-sm">
-                            {isEditing ? (
-                              <input type="text" className="w-full border p-1 rounded bg-white text-slate-900" value={editValues.field3} onChange={e => setEditValues({ ...editValues, field3: e.target.value })} />
-                            ) : (
-                              <span className="text-slate-700">{(item as Vehicle).unit}</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-3 text-sm">
-                            {isEditing ? (
-                              <input type="text" className="w-full border p-1 rounded bg-white text-slate-900" value={editValues.field4} onChange={e => setEditValues({ ...editValues, field4: e.target.value })} />
-                            ) : (
-                              <span className="text-slate-700">{(item as Vehicle).sector}</span>
-                            )}
-                          </td>
-                        </>
+                        <td className="px-6 py-3 text-sm">
+                          {isEditing ? (
+                            <input type="text" className="w-full border p-1 rounded bg-white text-slate-900" value={editValues.field4} onChange={e => setEditValues({ ...editValues, field4: e.target.value })} />
+                          ) : (
+                            <span className="text-slate-700">{val4}</span>
+                          )}
+                        </td>
                       )}
                       <td className="px-6 py-3 text-right space-x-2">
                         {isEditing ? (
@@ -397,7 +393,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           </>
                         ) : (
                           <>
-                            <button onClick={() => startEditing(id, val1, val2, activeTab === 'assets' ? (item as Asset).patrimony : (item as Vehicle).unit, activeTab === 'vehicles' ? (item as Vehicle).sector : undefined)} className="text-blue-500 hover:text-blue-700 p-1" title="Editar"><Edit size={18} /></button>
+                            <button onClick={() => startEditing(id, val1, val2, val3, val4)} className="text-blue-500 hover:text-blue-700 p-1" title="Editar"><Edit size={18} /></button>
                             <button onClick={() => handleDeleteItem(id)} className="text-gray-400 hover:text-red-600 p-1" title="Excluir"><Trash2 size={18} /></button>
                           </>
                         )}

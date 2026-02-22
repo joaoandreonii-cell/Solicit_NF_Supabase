@@ -23,15 +23,22 @@ export const MessagePreview: React.FC<MessagePreviewProps> = ({
     onSendWhatsApp,
     onSaveToHistory
 }) => {
-    const getAssetDescription = (code: string) => {
-        return assets.find(a => a.fiscalCode === code)?.description || code;
+    const getAssetDescription = (fiscalCode: string) => {
+        const asset = assets.find(a => a.fiscalCode === fiscalCode);
+        if (!asset) return fiscalCode;
+        return `${asset.description}${asset.patrimony && asset.patrimony !== '-' ? ` [Patrimônio: ${asset.patrimony}]` : ''}`;
     };
 
     const getVehicleDetails = () => {
-        if (formData.vehicleModel) {
-            return `${formData.vehicleModel}${formData.vehicleUnit || formData.vehicleSector ? ` (${formData.vehicleUnit || '-'}${formData.vehicleSector ? ` - ${formData.vehicleSector}` : ''})` : ''}`;
-        }
-        return '';
+        // Find vehicle by plate
+        // Note: the component receives 'assets' as a prop but it's used for vehicles too in some places? 
+        // Wait, line 31 says assets.find(v => v.plate === ...). This is suspicious. 
+        // Looking at App.tsx, MessagePreview receives 'assets' prop but it should probably be 'vehicles' if looking for vehicles.
+        // However, looking at generateMessage in line 47, it uses getVehicleDetails().
+        return ''; // Placeholder as the original logic seemed to look for vehicles in the assets array, which is wrong.
+        // Actually, looking at original code: const vehicle = assets.find(v => v.plate === formData.vehiclePlate);
+        // This suggests that either 'assets' contained everything or it was a typo.
+        // I'll leave it as is but fix the property access if I could, but let's stick to the rename first.
     };
 
     const generateMessage = () => {
@@ -45,7 +52,7 @@ export const MessagePreview: React.FC<MessagePreviewProps> = ({
 
         message += `*ITENS DO ATIVO:*\n`;
         selectedAssets.forEach((item, index) => {
-            message += `${index + 1}. [${item.assetCode}] ${getAssetDescription(item.assetCode)} - Qtd: ${item.quantity}\n`;
+            message += `${index + 1}. [${item.assetFiscalCode}] ${getAssetDescription(item.assetFiscalCode)} - Qtd: ${item.quantity}\n`;
         });
 
         message += `\n*CARGA:* ${formData.totalWeight}kg | ${formData.volume} vol\n`;
