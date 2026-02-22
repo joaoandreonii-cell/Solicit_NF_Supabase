@@ -1,5 +1,6 @@
 export interface Asset {
-  code: string;
+  fiscalCode: string;
+  patrimony: string;
   description: string;
 }
 
@@ -30,6 +31,9 @@ export interface TripFormData {
   returnDate: string;
   returnTime: string;
   observations: string; // New field
+  customVehicleModel?: string;
+  customVehicleUnit?: string;
+  customVehicleSector?: string;
 }
 
 export interface HistoryItem {

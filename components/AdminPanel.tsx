@@ -50,7 +50,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // --- New Item State ---
-  const [newAsset, setNewAsset] = useState<Asset>({ code: '', description: '' });
+  const [newAsset, setNewAsset] = useState<Asset>({ fiscalCode: '', patrimony: '-', description: '' });
   const [newVehicle, setNewVehicle] = useState<Vehicle>({ plate: '', model: '', unit: '', sector: '' });
 
   // --- Edit State ---
@@ -78,7 +78,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     const term = searchTerm.toLowerCase();
     if (activeTab === 'assets') {
       return assets.filter(a =>
-        a.code.toLowerCase().includes(term) ||
+        a.fiscalCode.toLowerCase().includes(term) ||
+        a.patrimony.toLowerCase().includes(term) ||
         a.description.toLowerCase().includes(term)
       );
     } else {
@@ -111,12 +112,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
 
     if (activeTab === 'assets') {
-      // Check for duplicate code (excluding current)
-      if (field1 !== oldId && assets.some(a => a.code === field1)) {
-        alert("Já existe um item com este código!");
+      // Check for duplicate fiscalCode (excluding current)
+      if (field1 !== oldId && assets.some(a => a.fiscalCode === field1)) {
+        alert("Já existe um item com este código fiscal!");
         return;
       }
-      const updated = assets.map(a => a.code === oldId ? { code: field1, description: field2 } : a);
+      const updated = assets.map(a => a.fiscalCode === oldId ? { fiscalCode: field1, patrimony: field3, description: field2 } : a);
       onAssetsChange(updated);
     } else {
       // Check for duplicate plate (excluding current)
@@ -142,7 +143,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       return;
     }
     const formattedData = activeTab === 'assets'
-      ? (dataToExport as Asset[]).map(a => ({ "Código": a.code, "Descrição": a.description }))
+      ? (dataToExport as Asset[]).map(a => ({ "Código Fiscal": a.fiscalCode, "Patrimônio": a.patrimony, "Descrição": a.description }))
       : (dataToExport as Vehicle[]).map(v => ({ "Placa": v.plate, "Modelo": v.model, "Unidade": v.unit, "Setor": v.sector }));
 
     const ws = XLSX.utils.json_to_sheet(formattedData);
@@ -173,9 +174,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           jsonData.forEach((row: any) => {
             const normalizedRow: Record<string, any> = {};
             Object.keys(row).forEach(k => normalizedRow[normalizeKey(k)] = row[k]);
-            const code = normalizedRow['codigo'] || normalizedRow['code'] || normalizedRow['id'];
+            const fCode = normalizedRow['codigofiscal'] || normalizedRow['fiscalcode'] || normalizedRow['codigo'] || normalizedRow['code'];
+            const patrimony = normalizedRow['patrimonio'] || normalizedRow['patrimony'] || '-';
             const desc = normalizedRow['descricao'] || normalizedRow['description'] || normalizedRow['desc'];
-            if (code && desc) mappedAssets.push({ code: String(code).trim(), description: String(desc).trim() });
+            if (fCode && desc) mappedAssets.push({ fiscalCode: String(fCode).trim(), patrimony: String(patrimony).trim(), description: String(desc).trim() });
           });
           if (mappedAssets.length > 0 && confirm(`Importar ${mappedAssets.length} imobilizados?`)) onAssetsChange(mappedAssets);
         } else {
@@ -209,16 +211,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const handleDeleteItem = (id: string) => {
     if (!confirm("Excluir este item?")) return;
-    if (activeTab === 'assets') onAssetsChange(assets.filter(a => a.code !== id));
+    if (activeTab === 'assets') onAssetsChange(assets.filter(a => a.fiscalCode !== id));
     else onVehiclesChange(vehicles.filter(v => v.plate !== id));
   };
 
   const handleAddManual = () => {
     if (activeTab === 'assets') {
-      if (!newAsset.code || !newAsset.description) return alert("Preencha Código e Descrição");
-      if (assets.some(a => a.code === newAsset.code)) return alert("Já existe este código!");
+      if (!newAsset.fiscalCode || !newAsset.description) return alert("Preencha Código Fiscal e Descrição");
+      if (assets.some(a => a.fiscalCode === newAsset.fiscalCode)) return alert("Já existe este código fiscal!");
       onAssetsChange([...assets, newAsset]);
-      setNewAsset({ code: '', description: '' });
+      setNewAsset({ fiscalCode: '', patrimony: '-', description: '' });
     } else {
       if (!newVehicle.plate || !newVehicle.model) return alert("Preencha Placa e Modelo");
       if (vehicles.some(v => v.plate === newVehicle.plate)) return alert("Já existe esta placa!");
@@ -301,7 +303,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2"><Plus size={14} /> Adicionar Manualmente</h3>
             {activeTab === 'assets' ? (
               <div className="flex flex-col md:flex-row gap-3">
-                <input type="text" placeholder="Código" className={`${inputStyle} w-full md:w-1/4`} value={newAsset.code} onChange={e => setNewAsset({ ...newAsset, code: e.target.value })} />
+                <input type="text" placeholder="Código Fiscal" className={`${inputStyle} w-full md:w-1/4`} value={newAsset.fiscalCode} onChange={e => setNewAsset({ ...newAsset, fiscalCode: e.target.value })} />
+                <input type="text" placeholder="Patrimônio" className={`${inputStyle} w-full md:w-1/4`} value={newAsset.patrimony} onChange={e => setNewAsset({ ...newAsset, patrimony: e.target.value })} />
                 <input type="text" placeholder="Descrição" className={`${inputStyle} w-full md:flex-1`} value={newAsset.description} onChange={e => setNewAsset({ ...newAsset, description: e.target.value })} />
                 <button onClick={handleAddManual} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition flex items-center justify-center"><Save size={18} /></button>
               </div>
@@ -321,7 +324,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-slate-100">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase w-32">{activeTab === 'assets' ? 'Código' : 'Placa'}</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase w-32">{activeTab === 'assets' ? 'Cód. Fiscal' : 'Placa'}</th>
+                  {activeTab === 'assets' && (
+                    <th className="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase w-32">Patrimônio</th>
+                  )}
                   <th className="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase">{activeTab === 'assets' ? 'Descrição' : 'Modelo'}</th>
                   {activeTab === 'vehicles' && (
                     <>
@@ -334,9 +340,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredList.map((item, idx) => {
-                  const id = activeTab === 'assets' ? (item as Asset).code : (item as Vehicle).plate;
-                  const val1 = activeTab === 'assets' ? (item as Asset).code : (item as Vehicle).plate;
+                  const id = activeTab === 'assets' ? (item as Asset).fiscalCode : (item as Vehicle).plate;
+                  const val1 = activeTab === 'assets' ? (item as Asset).fiscalCode : (item as Vehicle).plate;
                   const val2 = activeTab === 'assets' ? (item as Asset).description : (item as Vehicle).model;
+                  const field3 = activeTab === 'assets' ? (item as Asset).patrimony : (item as Vehicle).unit;
                   const isEditing = editingId === id;
 
                   return (
@@ -348,6 +355,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           <span className="font-mono text-slate-900">{val1}</span>
                         )}
                       </td>
+                      {activeTab === 'assets' && (
+                        <td className="px-6 py-3 text-sm">
+                          {isEditing ? (
+                            <input type="text" className="w-full border p-1 rounded bg-white text-slate-900" value={editValues.field3} onChange={e => setEditValues({ ...editValues, field3: e.target.value })} />
+                          ) : (
+                            <span className="text-slate-700">{(item as Asset).patrimony}</span>
+                          )}
+                        </td>
+                      )}
                       <td className="px-6 py-3 text-sm">
                         {isEditing ? (
                           <input type="text" className="w-full border p-1 rounded bg-white text-slate-900" value={editValues.field2} onChange={e => setEditValues({ ...editValues, field2: e.target.value })} />
@@ -381,7 +397,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           </>
                         ) : (
                           <>
-                            <button onClick={() => startEditing(id, val1, val2, (item as Vehicle).unit, (item as Vehicle).sector)} className="text-blue-500 hover:text-blue-700 p-1" title="Editar"><Edit size={18} /></button>
+                            <button onClick={() => startEditing(id, val1, val2, activeTab === 'assets' ? (item as Asset).patrimony : (item as Vehicle).unit, activeTab === 'vehicles' ? (item as Vehicle).sector : undefined)} className="text-blue-500 hover:text-blue-700 p-1" title="Editar"><Edit size={18} /></button>
                             <button onClick={() => handleDeleteItem(id)} className="text-gray-400 hover:text-red-600 p-1" title="Excluir"><Trash2 size={18} /></button>
                           </>
                         )}

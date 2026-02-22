@@ -24,7 +24,18 @@ export const MessagePreview: React.FC<MessagePreviewProps> = ({
     onSaveToHistory
 }) => {
     const getAssetDescription = (code: string) => {
-        return assets.find(a => a.code === code)?.description || code;
+        return assets.find(a => a.fiscalCode === code)?.description || code;
+    };
+
+    const getVehicleDetails = () => {
+        const vehicle = assets.find(v => v.plate === formData.vehiclePlate);
+        if (vehicle) {
+            return `${vehicle.model} (${vehicle.unit} - ${vehicle.sector})`;
+        }
+        if (formData.customVehicleModel) {
+            return `${formData.customVehicleModel} (${formData.customVehicleUnit || '-'} - ${formData.customVehicleSector || '-'})`;
+        }
+        return '';
     };
 
     const generateMessage = () => {
@@ -33,7 +44,7 @@ export const MessagePreview: React.FC<MessagePreviewProps> = ({
         message += `*ESTRUTURA:* ${formData.structureId}\n`;
         message += `*DESTINO:* ${formData.destinationCity}\n`;
         message += `*MOTORISTA:* ${formData.driverName}\n`;
-        message += `*PLACA:* ${formData.vehiclePlate}\n`;
+        message += `*PLACA:* ${formData.vehiclePlate}${getVehicleDetails() ? ` - ${getVehicleDetails()}` : ''}\n`;
         message += `*DATA/HORA SAÍDA:* ${formData.exitDate.split('-').reverse().join('/')} às ${formData.exitTime}\n\n`;
 
         message += `*ITENS DO ATIVO:*\n`;
