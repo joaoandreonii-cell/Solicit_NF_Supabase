@@ -143,9 +143,10 @@ export const TripForm: React.FC<TripFormProps> = ({
                             />
                             {errors.vehiclePlate && <p className="mt-1 text-xs text-red-500">{errors.vehiclePlate}</p>}
                             {formData.vehiclePlate && (
-                                <p className="text-xs text-blue-600 mt-1 font-medium">
-                                    Modelo: {vehicles.find(v => v.plate === formData.vehiclePlate)?.model}
-                                </p>
+                                <div className="text-xs text-blue-600 mt-1 font-medium space-y-0.5">
+                                    <p>Modelo: {vehicles.find(v => v.plate === formData.vehiclePlate)?.model}</p>
+                                    <p>Unidade: {vehicles.find(v => v.plate === formData.vehiclePlate)?.unit} | Setor: {vehicles.find(v => v.plate === formData.vehiclePlate)?.sector}</p>
+                                </div>
                             )}
                         </div>
 

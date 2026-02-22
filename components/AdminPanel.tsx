@@ -51,11 +51,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   // --- New Item State ---
   const [newAsset, setNewAsset] = useState<Asset>({ code: '', description: '' });
-  const [newVehicle, setNewVehicle] = useState<Vehicle>({ plate: '', model: '' });
+  const [newVehicle, setNewVehicle] = useState<Vehicle>({ plate: '', model: '', unit: '', sector: '' });
 
   // --- Edit State ---
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState<{ field1: string; field2: string }>({ field1: '', field2: '' });
+  const [editValues, setEditValues] = useState<{ field1: string; field2: string; field3?: string; field4?: string }>({ field1: '', field2: '', field3: '', field4: '' });
 
   // ---------------------------------------------------------------------------
   // AUTHENTICATION LOGIC
@@ -92,21 +92,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // ---------------------------------------------------------------------------
   // EDIT LOGIC
   // ---------------------------------------------------------------------------
-  const startEditing = (id: string, val1: string, val2: string) => {
+  const startEditing = (id: string, val1: string, val2: string, val3?: string, val4?: string) => {
     setEditingId(id);
-    setEditValues({ field1: val1, field2: val2 });
+    setEditValues({ field1: val1, field2: val2, field3: val3 || '', field4: val4 || '' });
   };
 
   const cancelEditing = () => {
     setEditingId(null);
-    setEditValues({ field1: '', field2: '' });
+    setEditValues({ field1: '', field2: '', field3: '', field4: '' });
   };
 
   const saveEdit = (oldId: string) => {
-    const { field1, field2 } = editValues;
+    const { field1, field2, field3, field4 } = editValues;
 
     if (!field1.trim() || !field2.trim()) {
-      alert("Os campos não podem estar vazios.");
+      alert("Os campos Placa/Código e Modelo/Descrição não podem estar vazios.");
       return;
     }
 
@@ -124,7 +124,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         alert("Já existe um veículo com esta placa!");
         return;
       }
-      const updated = vehicles.map(v => v.plate === oldId ? { plate: field1, model: field2 } : v);
+      const updated = vehicles.map(v => v.plate === oldId ? { plate: field1, model: field2, unit: field3 || '', sector: field4 || '' } : v);
       onVehiclesChange(updated);
     }
 
@@ -143,7 +143,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
     const formattedData = activeTab === 'assets'
       ? (dataToExport as Asset[]).map(a => ({ "Código": a.code, "Descrição": a.description }))
-      : (dataToExport as Vehicle[]).map(v => ({ "Placa": v.plate, "Modelo": v.model }));
+      : (dataToExport as Vehicle[]).map(v => ({ "Placa": v.plate, "Modelo": v.model, "Unidade": v.unit, "Setor": v.sector }));
 
     const ws = XLSX.utils.json_to_sheet(formattedData);
     const wb = XLSX.utils.book_new();
@@ -185,7 +185,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             Object.keys(row).forEach(k => normalizedRow[normalizeKey(k)] = row[k]);
             const plate = normalizedRow['placa'] || normalizedRow['plate'];
             const model = normalizedRow['modelo'] || normalizedRow['model'];
-            if (plate && model) mappedVehicles.push({ plate: String(plate).trim(), model: String(model).trim() });
+            const unit = normalizedRow['unidade'] || normalizedRow['unit'] || '-';
+            const sector = normalizedRow['setor'] || normalizedRow['sector'] || '-';
+            if (plate && model) mappedVehicles.push({ plate: String(plate).trim(), model: String(model).trim(), unit: String(unit).trim(), sector: String(sector).trim() });
           });
           if (mappedVehicles.length > 0 && confirm(`Importar ${mappedVehicles.length} veículos?`)) onVehiclesChange(mappedVehicles);
         }
@@ -221,7 +223,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       if (!newVehicle.plate || !newVehicle.model) return alert("Preencha Placa e Modelo");
       if (vehicles.some(v => v.plate === newVehicle.plate)) return alert("Já existe esta placa!");
       onVehiclesChange([...vehicles, newVehicle]);
-      setNewVehicle({ plate: '', model: '' });
+      setNewVehicle({ plate: '', model: '', unit: '', sector: '' });
     }
   };
 
@@ -305,9 +307,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </div>
             ) : (
               <div className="flex flex-col md:flex-row gap-3">
-                <input type="text" placeholder="Placa" className={`${inputStyle} w-full md:w-1/3`} value={newVehicle.plate} onChange={e => setNewVehicle({ ...newVehicle, plate: e.target.value })} />
+                <input type="text" placeholder="Placa" className={`${inputStyle} w-full md:w-48`} value={newVehicle.plate} onChange={e => setNewVehicle({ ...newVehicle, plate: e.target.value })} />
                 <input type="text" placeholder="Modelo" className={`${inputStyle} w-full md:flex-1`} value={newVehicle.model} onChange={e => setNewVehicle({ ...newVehicle, model: e.target.value })} />
-                <button onClick={handleAddManual} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition flex items-center justify-center"><Save size={18} /></button>
+                <input type="text" placeholder="Unidade" className={`${inputStyle} w-full md:w-48`} value={newVehicle.unit} onChange={e => setNewVehicle({ ...newVehicle, unit: e.target.value })} />
+                <input type="text" placeholder="Setor" className={`${inputStyle} w-full md:w-48`} value={newVehicle.sector} onChange={e => setNewVehicle({ ...newVehicle, sector: e.target.value })} />
+                <button onClick={handleAddManual} className="grow-0 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition flex items-center justify-center h-10 self-end md:self-auto"><Save size={18} /></button>
               </div>
             )}
           </div>
@@ -319,6 +323,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase w-32">{activeTab === 'assets' ? 'Código' : 'Placa'}</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase">{activeTab === 'assets' ? 'Descrição' : 'Modelo'}</th>
+                  {activeTab === 'vehicles' && (
+                    <>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase w-48">Unidade</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase w-48">Setor</th>
+                    </>
+                  )}
                   <th className="px-6 py-3 text-right text-xs font-bold text-slate-600 uppercase w-32">Ações</th>
                 </tr>
               </thead>
@@ -345,6 +355,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           <span className="text-slate-700">{val2}</span>
                         )}
                       </td>
+                      {activeTab === 'vehicles' && (
+                        <>
+                          <td className="px-6 py-3 text-sm">
+                            {isEditing ? (
+                              <input type="text" className="w-full border p-1 rounded bg-white text-slate-900" value={editValues.field3} onChange={e => setEditValues({ ...editValues, field3: e.target.value })} />
+                            ) : (
+                              <span className="text-slate-700">{(item as Vehicle).unit}</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-3 text-sm">
+                            {isEditing ? (
+                              <input type="text" className="w-full border p-1 rounded bg-white text-slate-900" value={editValues.field4} onChange={e => setEditValues({ ...editValues, field4: e.target.value })} />
+                            ) : (
+                              <span className="text-slate-700">{(item as Vehicle).sector}</span>
+                            )}
+                          </td>
+                        </>
+                      )}
                       <td className="px-6 py-3 text-right space-x-2">
                         {isEditing ? (
                           <>
@@ -353,7 +381,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           </>
                         ) : (
                           <>
-                            <button onClick={() => startEditing(id, val1, val2)} className="text-blue-500 hover:text-blue-700 p-1" title="Editar"><Edit size={18} /></button>
+                            <button onClick={() => startEditing(id, val1, val2, (item as Vehicle).unit, (item as Vehicle).sector)} className="text-blue-500 hover:text-blue-700 p-1" title="Editar"><Edit size={18} /></button>
                             <button onClick={() => handleDeleteItem(id)} className="text-gray-400 hover:text-red-600 p-1" title="Excluir"><Trash2 size={18} /></button>
                           </>
                         )}

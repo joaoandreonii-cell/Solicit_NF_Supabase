@@ -932,19 +932,19 @@ export const ASSETS: Asset[] = [
 ];
 
 export const VEHICLES: Vehicle[] = [
-  { plate: "RLE1C40", model: "Yaris - Caçador" },
-  { plate: "RLA5J28", model: "Yaris - Chapecó" },
-  { plate: "RLE7H59", model: "Yaris - F12" },
-  { plate: "RLA3G50", model: "Yaris - Joaçaba" },
-  { plate: "RYI2D03", model: "Master" },
-  { plate: "LUO4C84", model: "Hilux" },
-  { plate: "TPP0I76", model: "Oroch" },
-  { plate: "TPT2E79", model: "Saveiro - Chapecó" },
-  { plate: "RYM4A95", model: "Oroch" },
-  { plate: "SXT1C47", model: "Polo - Curitiba" },
-  { plate: "RLJ0G62", model: "Oroch" },
-  { plate: "RYA8D48", model: "Cronos - Curitiba" },
-  { plate: "BDG9I87", model: "Saveiro" },
-  { plate: "SXT4G32", model: "Polo - Cachoeirinha" },
-  { plate: "SXT4F52", model: "Polo" }
+  { plate: "RLE1C40", model: "Yaris - Caçador", unit: "-", sector: "-" },
+  { plate: "RLA5J28", model: "Yaris - Chapecó", unit: "-", sector: "-" },
+  { plate: "RLE7H59", model: "Yaris - F12", unit: "-", sector: "-" },
+  { plate: "RLA3G50", model: "Yaris - Joaçaba", unit: "-", sector: "-" },
+  { plate: "RYI2D03", model: "Master", unit: "-", sector: "-" },
+  { plate: "LUO4C84", model: "Hilux", unit: "-", sector: "-" },
+  { plate: "TPP0I76", model: "Oroch", unit: "-", sector: "-" },
+  { plate: "TPT2E79", model: "Saveiro - Chapecó", unit: "-", sector: "-" },
+  { plate: "RYM4A95", model: "Oroch", unit: "-", sector: "-" },
+  { plate: "SXT1C47", model: "Polo - Curitiba", unit: "-", sector: "-" },
+  { plate: "RLJ0G62", model: "Oroch", unit: "-", sector: "-" },
+  { plate: "RYA8D48", model: "Cronos - Curitiba", unit: "-", sector: "-" },
+  { plate: "BDG9I87", model: "Saveiro", unit: "-", sector: "-" },
+  { plate: "SXT4G32", model: "Polo - Cachoeirinha", unit: "-", sector: "-" },
+  { plate: "SXT4F52", model: "Polo", unit: "-", sector: "-" }
 ];

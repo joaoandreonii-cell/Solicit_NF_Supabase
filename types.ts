@@ -6,6 +6,8 @@ export interface Asset {
 export interface Vehicle {
   plate: string;
   model: string;
+  unit: string;
+  sector: string;
 }
 
 export interface SelectedAsset {
