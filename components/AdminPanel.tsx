@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import * as XLSX from 'xlsx';
 import { Asset, Vehicle } from '../types';
 import {
@@ -39,6 +40,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   isAuthenticated,
   onLogin
 }) => {
+  const { user } = useAuth();
   // --- Auth State ---
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -255,7 +257,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           </div>
           <div className="flex gap-3">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">Cancelar</button>
-            <button onClick={onLogin} className="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">Acessar Painel</button>
+            <button
+              onClick={() => {
+                if (user?.email_verified === false) {
+                  alert("Por favor, verifique seu email antes de acessar o painel.");
+                  return;
+                }
+                onLogin();
+              }}
+              className="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+            >
+              Acessar Painel
+            </button>
           </div>
         </div>
       </div>
@@ -326,7 +339,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           </div>
 
           {/* TABLE */}
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-slate-100">
                 <tr>

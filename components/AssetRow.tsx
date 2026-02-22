@@ -11,11 +11,11 @@ interface AssetRowProps {
 }
 
 export const AssetRow: React.FC<AssetRowProps> = ({ item, assets, onUpdate, onRemove }) => {
-  const assetOptions = assets.map(a => ({
+  const assetOptions = React.useMemo(() => assets.map(a => ({
     value: a.fiscalCode,
     label: a.description,
-    subLabel: `${a.fiscalCode} | ${a.patrimony}` // Show both in search results
-  }));
+    subLabel: `${a.fiscalCode} | ${a.patrimony}`
+  })), [assets]);
 
   return (
     <div className="flex flex-col p-3 border rounded-lg bg-white shadow-sm mb-2 border-slate-200">

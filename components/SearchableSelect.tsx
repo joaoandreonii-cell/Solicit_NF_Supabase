@@ -40,6 +40,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -86,12 +87,46 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
     onChange(option.value);
     setSearchTerm(option.label);
     setIsOpen(false);
+    setFocusedIndex(-1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') setIsOpen(true);
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setFocusedIndex(prev => (prev < filteredOptions.length - 1 ? prev + 1 : prev));
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setFocusedIndex(prev => (prev > 0 ? prev - 1 : prev));
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (focusedIndex >= 0 && focusedIndex < filteredOptions.length) {
+          handleSelect(filteredOptions[focusedIndex]);
+        }
+        break;
+      case 'Escape':
+        setIsOpen(false);
+        setFocusedIndex(-1);
+        break;
+      case 'Tab':
+        setIsOpen(false);
+        setFocusedIndex(-1);
+        break;
+    }
   };
 
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChange('');
     setSearchTerm('');
+    setFocusedIndex(-1);
     inputRef.current?.focus();
   };
 
@@ -106,14 +141,17 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
           className={`w-full bg-white text-slate-900 border rounded-md shadow-sm focus:ring-blue-500 p-2 pr-8 placeholder-gray-400 ${error ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'} ${inputClassName}`}
           placeholder={placeholder}
           value={searchTerm}
+          onKeyDown={handleKeyDown}
           onChange={(e) => {
             setSearchTerm(e.target.value);
             if (!isOpen) setIsOpen(true);
+            setFocusedIndex(-1);
             // If user clears text, clear value
             if (e.target.value === '') onChange('');
           }}
           onFocus={() => {
             setIsOpen(true);
+            setFocusedIndex(-1);
             // Optional: select all text on focus for easier replacement
             // inputRef.current?.select(); 
           }}
@@ -142,7 +180,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
             filteredOptions.map((option) => (
               <div
                 key={option.value}
-                className={`cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-blue-50 ${option.value === value ? 'bg-blue-100 text-blue-900' : 'text-gray-900'}`}
+                className={`cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-blue-50 ${option.value === value ? 'bg-blue-100 text-blue-900' : ''} ${focusedIndex === filteredOptions.indexOf(option) ? 'bg-blue-50' : ''}`}
                 onClick={() => handleSelect(option)}
               >
                 <div className="flex flex-col">

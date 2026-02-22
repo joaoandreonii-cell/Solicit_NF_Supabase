@@ -13,6 +13,8 @@ import {
   CheckCircle,
   RotateCcw
 } from 'lucide-react';
+import { useTripForm } from './hooks/useTripForm';
+import { useHistory } from './hooks/useHistory';
 
 const getInitialForm = (): TripFormData => ({
   workName: '',
@@ -31,84 +33,49 @@ const getInitialForm = (): TripFormData => ({
 
 function AppContent() {
   const { user, loading } = useAuth();
-  const [formData, setFormData] = useState<TripFormData>(getInitialForm());
-  const [selectedAssets, setSelectedAssets] = useState<SelectedAsset[]>([]);
+  const {
+    formData, setFormData, selectedAssets, setSelectedAssets,
+    errors, setErrors, formKey, handleInputChange,
+    addAssetRow, removeAssetRow, updateAssetRow,
+    validateForm, resetForm
+  } = useTripForm();
+
+  const { history, saveToHistory, deleteHistoryItem } = useHistory();
+
   const [showToast, setShowToast] = useState<{ show: boolean, message: string }>({ show: false, message: '' });
   const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [formKey, setFormKey] = useState(0); // Used to force re-render of form on reset
 
   // Dynamic Data State
   const [assets, setAssets] = useState<Asset[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
-  // History State
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  // Modals/Panels State
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-
-  // Admin State
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
 
-  // Validation State
-  const [errors, setErrors] = useState<Partial<Record<keyof TripFormData, string>>>({});
-
-  // Load Initial Data (History, Assets, Vehicles)
+  // Load Initial Assets/Vehicles
   useEffect(() => {
-    // History
-    const savedHistory = localStorage.getItem('transport_app_history');
-    if (savedHistory) {
-      try { setHistory(JSON.parse(savedHistory)); } catch (e) { console.error(e); }
-    }
-
-    // Assets
     const savedAssets = localStorage.getItem('transport_app_assets');
-    if (savedAssets) {
-      try { setAssets(JSON.parse(savedAssets)); } catch (e) { setAssets(INITIAL_ASSETS); }
-    } else {
-      setAssets(INITIAL_ASSETS);
-    }
+    setAssets(savedAssets ? JSON.parse(savedAssets) : INITIAL_ASSETS);
 
-    // Vehicles
     const savedVehicles = localStorage.getItem('transport_app_vehicles');
-    if (savedVehicles) {
-      try { setVehicles(JSON.parse(savedVehicles)); } catch (e) { setVehicles(INITIAL_VEHICLES); }
-    } else {
-      setVehicles(INITIAL_VEHICLES);
-    }
+    setVehicles(savedVehicles ? JSON.parse(savedVehicles) : INITIAL_VEHICLES);
   }, []);
 
-  // Save to localStorage whenever data changes
-  useEffect(() => { localStorage.setItem('transport_app_history', JSON.stringify(history)); }, [history]);
+  // Save Dynamic Data
   useEffect(() => { localStorage.setItem('transport_app_assets', JSON.stringify(assets)); }, [assets]);
   useEffect(() => { localStorage.setItem('transport_app_vehicles', JSON.stringify(vehicles)); }, [vehicles]);
-
-  // --- Handlers ---
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
 
   const triggerToast = (message: string) => {
     setShowToast({ show: true, message });
     setTimeout(() => setShowToast({ show: false, message: '' }), 3000);
   };
 
-  const deleteHistoryItem = (id: string) => {
-    const newHistory = history.filter(item => item.id !== id);
-    setHistory(newHistory);
-    localStorage.setItem('transport_app_history', JSON.stringify(newHistory));
-  };
-
   const loadHistoryItem = (item: HistoryItem) => {
     setFormData(item.formData);
-    const freshAssets = item.selectedAssets.map(a => ({
-      ...a,
-      id: crypto.randomUUID()
-    }));
-    setSelectedAssets(freshAssets);
+    setSelectedAssets(item.selectedAssets.map(a => ({ ...a, id: crypto.randomUUID() })));
     setIsPreviewMode(false);
-    setFormKey(prev => prev + 1);
   };
 
   const handleSaveToHistory = (isDraft: boolean = false) => {
@@ -119,48 +86,8 @@ function AppContent() {
       selectedAssets: [...selectedAssets],
       isDraft
     };
-
-    const newHistory = [newItem, ...history];
-    setHistory(newHistory);
-    localStorage.setItem('transport_app_history', JSON.stringify(newHistory));
-
-    triggerToast(isDraft ? 'Rascunho salvo no histórico!' : 'Salvo no histórico!');
-  };
-
-  const addAssetRow = () => {
-    const newAsset: SelectedAsset = {
-      id: crypto.randomUUID(),
-      assetFiscalCode: '',
-      quantity: 1
-    };
-    setSelectedAssets(prev => [...prev, newAsset]);
-  };
-
-  const removeAssetRow = (id: string) => {
-    setSelectedAssets(prev => prev.filter(item => item.id !== id));
-  };
-
-  const updateAssetRow = (id: string, field: keyof SelectedAsset, value: string | number) => {
-    setSelectedAssets(prev => prev.map(item => {
-      if (item.id === id) {
-        return { ...item, [field]: value };
-      }
-      return item;
-    }));
-  };
-
-  const validateForm = () => {
-    const newErrors: Partial<Record<keyof TripFormData, string>> = {};
-    if (!formData.workName.trim()) newErrors.workName = 'Nome da obra é obrigatório';
-    if (!formData.structureId.trim()) newErrors.structureId = 'Código da estrutura é obrigatório';
-    if (!formData.destinationCity.trim()) newErrors.destinationCity = 'Cidade destino é obrigatória';
-    if (!formData.driverName.trim()) newErrors.driverName = 'Nome do motorista é obrigatório';
-    if (!formData.vehiclePlate.trim()) newErrors.vehiclePlate = 'Selecione um veículo';
-    if (!formData.exitDate) newErrors.exitDate = 'Data de saída é obrigatória';
-    if (!formData.exitTime) newErrors.exitTime = 'Horário de saída é obrigatório';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    saveToHistory(newItem);
+    triggerToast(isDraft ? 'Rascunho salvo!' : 'Salvo no histórico!');
   };
 
   const handlePreviewMode = () => {
@@ -168,17 +95,14 @@ function AppContent() {
       setIsPreviewMode(true);
       window.scrollTo(0, 0);
     } else {
-      triggerToast('Por favor, preencha todos os campos obrigatórios.');
+      triggerToast('Preencha os campos obrigatórios.');
     }
   };
 
   const handleResetForm = () => {
-    if (window.confirm('Tem certeza que deseja limpar todo o formulário? Todas as informações não salvas serão perdidas.')) {
-      setFormData(getInitialForm());
-      setSelectedAssets([]);
+    if (window.confirm('Limpar todo o formulário?')) {
+      resetForm();
       setIsPreviewMode(false);
-      setErrors({});
-      setFormKey(prev => prev + 1);
     }
   };
 
@@ -303,6 +227,7 @@ function AppContent() {
           formData={formData}
           selectedAssets={selectedAssets}
           assets={assets}
+          vehicles={vehicles}
           onBack={() => setIsPreviewMode(false)}
           onCopy={handleCopyMessage}
           onSendWhatsApp={handleSendWhatsApp}

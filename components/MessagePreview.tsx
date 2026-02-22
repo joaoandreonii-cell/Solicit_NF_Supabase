@@ -8,6 +8,7 @@ interface MessagePreviewProps {
     formData: TripFormData;
     selectedAssets: SelectedAsset[];
     assets: any[];
+    vehicles: any[];
     onBack: () => void;
     onCopy: () => void;
     onSendWhatsApp: () => void;
@@ -18,6 +19,7 @@ export const MessagePreview: React.FC<MessagePreviewProps> = ({
     formData,
     selectedAssets,
     assets,
+    vehicles,
     onBack,
     onCopy,
     onSendWhatsApp,
@@ -30,15 +32,9 @@ export const MessagePreview: React.FC<MessagePreviewProps> = ({
     };
 
     const getVehicleDetails = () => {
-        // Find vehicle by plate
-        // Note: the component receives 'assets' as a prop but it's used for vehicles too in some places? 
-        // Wait, line 31 says assets.find(v => v.plate === ...). This is suspicious. 
-        // Looking at App.tsx, MessagePreview receives 'assets' prop but it should probably be 'vehicles' if looking for vehicles.
-        // However, looking at generateMessage in line 47, it uses getVehicleDetails().
-        return ''; // Placeholder as the original logic seemed to look for vehicles in the assets array, which is wrong.
-        // Actually, looking at original code: const vehicle = assets.find(v => v.plate === formData.vehiclePlate);
-        // This suggests that either 'assets' contained everything or it was a typo.
-        // I'll leave it as is but fix the property access if I could, but let's stick to the rename first.
+        const vehicle = vehicles.find(v => v.plate === formData.vehiclePlate);
+        if (!vehicle) return '';
+        return `(${vehicle.model}${vehicle.unit !== '-' ? ` | ${vehicle.unit}` : ''}${vehicle.sector !== '-' ? ` | ${vehicle.sector}` : ''})`;
     };
 
     const generateMessage = () => {
