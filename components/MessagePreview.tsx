@@ -28,12 +28,8 @@ export const MessagePreview: React.FC<MessagePreviewProps> = ({
     };
 
     const getVehicleDetails = () => {
-        const vehicle = assets.find(v => v.plate === formData.vehiclePlate);
-        if (vehicle) {
-            return `${vehicle.model} (${vehicle.unit} - ${vehicle.sector})`;
-        }
-        if (formData.customVehicleModel) {
-            return `${formData.customVehicleModel} (${formData.customVehicleUnit || '-'} - ${formData.customVehicleSector || '-'})`;
+        if (formData.vehicleModel) {
+            return `${formData.vehicleModel}${formData.vehicleUnit || formData.vehicleSector ? ` (${formData.vehicleUnit || '-'}${formData.vehicleSector ? ` - ${formData.vehicleSector}` : ''})` : ''}`;
         }
         return '';
     };

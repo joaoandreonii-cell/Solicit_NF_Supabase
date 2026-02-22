@@ -134,7 +134,14 @@ export const TripForm: React.FC<TripFormProps> = ({
                                 options={vehicles.map(v => ({ value: v.plate, label: v.plate, subLabel: v.model }))}
                                 value={formData.vehiclePlate}
                                 onChange={(val) => {
-                                    setFormData(prev => ({ ...prev, vehiclePlate: val }));
+                                    const selectedVehicle = vehicles.find(v => v.plate === val);
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        vehiclePlate: val,
+                                        vehicleModel: selectedVehicle ? selectedVehicle.model : (prev.vehiclePlate === val ? prev.vehicleModel : ''),
+                                        vehicleUnit: selectedVehicle ? selectedVehicle.unit : (prev.vehiclePlate === val ? prev.vehicleUnit : ''),
+                                        vehicleSector: selectedVehicle ? selectedVehicle.sector : (prev.vehiclePlate === val ? prev.vehicleSector : '')
+                                    }));
                                     if (errors.vehiclePlate) setErrors(prev => ({ ...prev, vehiclePlate: undefined }));
                                 }}
                                 placeholder="Busque pela placa ou modelo"
@@ -143,62 +150,47 @@ export const TripForm: React.FC<TripFormProps> = ({
                                 allowCustomValue={true}
                             />
                             {errors.vehiclePlate && <p className="mt-1 text-xs text-red-500">{errors.vehiclePlate}</p>}
-                            {formData.vehiclePlate && (
-                                <div className="text-xs text-blue-600 mt-1 font-medium space-y-0.5">
-                                    {vehicles.find(v => v.plate === formData.vehiclePlate) ? (
-                                        <>
-                                            <p>Modelo: {vehicles.find(v => v.plate === formData.vehiclePlate)?.model}</p>
-                                            <p>Unidade: {vehicles.find(v => v.plate === formData.vehiclePlate)?.unit} | Setor: {vehicles.find(v => v.plate === formData.vehiclePlate)?.sector}</p>
-                                        </>
-                                    ) : (
-                                        <p className="text-orange-600 font-semibold italic">Veículo não cadastrado. Preencha os detalhes abaixo:</p>
-                                    )}
-                                </div>
-                            )}
                         </div>
 
-                        {!vehicles.find(v => v.plate === formData.vehiclePlate) && formData.vehiclePlate && (
-                            <>
-                                <div>
-                                    <label htmlFor="customVehicleModel" className="block text-sm font-medium text-slate-700">Modelo do Veículo</label>
-                                    <input
-                                        type="text"
-                                        id="customVehicleModel"
-                                        name="customVehicleModel"
-                                        value={formData.customVehicleModel || ''}
-                                        onChange={handleInputChange}
-                                        className="mt-1 block w-full bg-white text-slate-900 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
-                                        placeholder="Ex: Ford Cargo"
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <label htmlFor="customVehicleUnit" className="block text-sm font-medium text-slate-700">Unidade</label>
-                                        <input
-                                            type="text"
-                                            id="customVehicleUnit"
-                                            name="customVehicleUnit"
-                                            value={formData.customVehicleUnit || ''}
-                                            onChange={handleInputChange}
-                                            className="mt-1 block w-full bg-white text-slate-900 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
-                                            placeholder="Ex: Matriz"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label htmlFor="customVehicleSector" className="block text-sm font-medium text-slate-700">Setor</label>
-                                        <input
-                                            type="text"
-                                            id="customVehicleSector"
-                                            name="customVehicleSector"
-                                            value={formData.customVehicleSector || ''}
-                                            onChange={handleInputChange}
-                                            className="mt-1 block w-full bg-white text-slate-900 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
-                                            placeholder="Ex: Logística"
-                                        />
-                                    </div>
-                                </div>
-                            </>
-                        )}
+                        <div>
+                            <label htmlFor="vehicleModel" className="block text-sm font-medium text-slate-700">Modelo do Veículo</label>
+                            <input
+                                type="text"
+                                id="vehicleModel"
+                                name="vehicleModel"
+                                value={formData.vehicleModel || ''}
+                                onChange={handleInputChange}
+                                className="mt-1 block w-full bg-white text-slate-900 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                                placeholder="Ex: Ford Cargo"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="vehicleUnit" className="block text-sm font-medium text-slate-700">Unidade</label>
+                                <input
+                                    type="text"
+                                    id="vehicleUnit"
+                                    name="vehicleUnit"
+                                    value={formData.vehicleUnit || ''}
+                                    onChange={handleInputChange}
+                                    className="mt-1 block w-full bg-white text-slate-900 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                                    placeholder="Ex: Matriz"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="vehicleSector" className="block text-sm font-medium text-slate-700">Setor</label>
+                                <input
+                                    type="text"
+                                    id="vehicleSector"
+                                    name="vehicleSector"
+                                    value={formData.vehicleSector || ''}
+                                    onChange={handleInputChange}
+                                    className="mt-1 block w-full bg-white text-slate-900 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                                    placeholder="Ex: Logística"
+                                />
+                            </div>
+                        </div>
 
                         <div>
                             <label htmlFor="driverName" className="block text-sm font-medium text-slate-700">Motorista</label>
