@@ -54,10 +54,37 @@ function AppContent() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
 
-  // Load Initial Assets/Vehicles
+  // Load Initial Assets/Vehicles with migration for schema changes
   useEffect(() => {
     const savedAssets = localStorage.getItem('transport_app_assets');
-    setAssets(savedAssets ? JSON.parse(savedAssets) : INITIAL_ASSETS);
+    if (savedAssets) {
+      try {
+        const parsed = JSON.parse(savedAssets);
+        // Migrate old fields with multiple possible names and casing
+        const migrated = parsed.map((a: any) => {
+          // Find description
+          const description = a.description || a.descricao || a.desc || '';
+
+          // Find fiscal code (check various common names)
+          const fCode = a.fiscalCode || a.fiscalcode || a.code || a.codigo || a.assetCode || '';
+
+          // Find patrimony
+          const patrimony = a.patrimony || a.patrimonio || a.patrimonio_ || '-';
+
+          return {
+            fiscalCode: String(fCode).trim(),
+            patrimony: String(patrimony).trim(),
+            description: String(description).trim()
+          };
+        }).filter((a: any) => a.fiscalCode || a.description); // Remove empty remnants
+
+        setAssets(migrated.length > 0 ? migrated : INITIAL_ASSETS);
+      } catch (e) {
+        setAssets(INITIAL_ASSETS);
+      }
+    } else {
+      setAssets(INITIAL_ASSETS);
+    }
 
     const savedVehicles = localStorage.getItem('transport_app_vehicles');
     setVehicles(savedVehicles ? JSON.parse(savedVehicles) : INITIAL_VEHICLES);
@@ -74,7 +101,13 @@ function AppContent() {
 
   const loadHistoryItem = (item: HistoryItem) => {
     setFormData(item.formData);
-    setSelectedAssets(item.selectedAssets.map(a => ({ ...a, id: crypto.randomUUID() })));
+    // Migrate old 'assetCode' to 'assetFiscalCode' if necessary
+    const migratedAssets = item.selectedAssets.map((a: any) => ({
+      ...a,
+      id: crypto.randomUUID(),
+      assetFiscalCode: a.assetFiscalCode || a.assetCode || ''
+    }));
+    setSelectedAssets(migratedAssets);
     setIsPreviewMode(false);
   };
 
