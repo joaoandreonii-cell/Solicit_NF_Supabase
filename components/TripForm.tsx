@@ -144,24 +144,30 @@ export const TripForm: React.FC<TripFormProps> = ({
                                 className="mt-1"
                                 error={!!errors.vehiclePlate}
                             />
-                            {formData.vehiclePlate === 'OUTRO' ? (
-                                <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                                    <label htmlFor="customVehiclePlate" className="block text-xs font-semibold text-blue-700 mb-1 uppercase tracking-wider">Placa do Veículo (Manual)</label>
+                            {errors.vehiclePlate && <p className="mt-1 text-xs text-red-500">{errors.vehiclePlate}</p>}
+                            {formData.vehiclePlate && formData.vehiclePlate !== 'OUTRO' && (
+                                <div className="text-xs text-blue-600 mt-1 font-medium space-y-0.5 animate-in fade-in duration-300">
+                                    <p>Modelo: {vehicles.find(v => v.plate === formData.vehiclePlate)?.model}</p>
+                                    <p>Unidade: {vehicles.find(v => v.plate === formData.vehiclePlate)?.unit} | Setor: {vehicles.find(v => v.plate === formData.vehiclePlate)?.sector}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Placa Manual (Shown only when 'OUTRO' is selected, but keeps space in desktop) */}
+                        <div className={formData.vehiclePlate === 'OUTRO' ? 'block animate-in fade-in slide-in-from-top-2 duration-300' : 'hidden lg:block lg:invisible pointer-events-none'}>
+                            {formData.vehiclePlate === 'OUTRO' && (
+                                <div>
+                                    <label htmlFor="customVehiclePlate" className="block text-sm font-medium text-slate-700">Placa do Veículo (Manual)</label>
                                     <input
                                         type="text"
                                         id="customVehiclePlate"
                                         name="customVehiclePlate"
                                         value={formData.customVehiclePlate}
                                         onChange={handleInputChange}
-                                        className={`block w-full bg-blue-50/30 text-slate-900 rounded-md shadow-sm focus:ring-blue-500 border p-2 ${errors.customVehiclePlate ? 'border-red-500 focus:border-red-500' : 'border-blue-200 focus:border-blue-500'}`}
+                                        className={`mt-1 block w-full bg-blue-50/30 text-slate-900 rounded-md shadow-sm focus:ring-blue-500 border p-2 ${errors.customVehiclePlate ? 'border-red-500 focus:border-red-500' : 'border-blue-200 focus:border-blue-500'}`}
                                         placeholder="Ex: ABC-1234"
                                     />
                                     {errors.customVehiclePlate && <p className="mt-1 text-xs text-red-500">{errors.customVehiclePlate}</p>}
-                                </div>
-                            ) : formData.vehiclePlate && (
-                                <div className="text-xs text-blue-600 mt-1 font-medium space-y-0.5">
-                                    <p>Modelo: {vehicles.find(v => v.plate === formData.vehiclePlate)?.model}</p>
-                                    <p>Unidade: {vehicles.find(v => v.plate === formData.vehiclePlate)?.unit} | Setor: {vehicles.find(v => v.plate === formData.vehiclePlate)?.sector}</p>
                                 </div>
                             )}
                         </div>
