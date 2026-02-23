@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import * as XLSX from 'xlsx';
 import { Asset, Vehicle } from '../types';
+import { useSync } from '../hooks/useSync';
 import {
   Trash2,
   Upload,
@@ -41,6 +42,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onLogin
 }) => {
   const { user } = useAuth();
+  const { clearRemoteStorage } = useSync();
   // --- Auth State ---
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -212,8 +214,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleDeleteAll = () => {
     const label = activeTab === 'assets' ? 'imobilizados' : 'veículos';
     if (confirm(`PERIGO: Isso apagará TODOS os ${label} do banco de dados.`)) {
-      if (activeTab === 'assets') onAssetsChange([]);
-      else onVehiclesChange([]);
+      if (activeTab === 'assets') {
+        onAssetsChange([]);
+        clearRemoteStorage('assets');
+      } else {
+        onVehiclesChange([]);
+        clearRemoteStorage('vehicles');
+      }
     }
   };
 

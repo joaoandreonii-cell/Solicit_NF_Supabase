@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginScreen } from './components/Auth/LoginScreen';
 import { TripFormData, SelectedAsset, HistoryItem, Asset, Vehicle } from './types';
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useTripForm } from './hooks/useTripForm';
 import { useHistory } from './hooks/useHistory';
+import { useSync } from './hooks/useSync';
 
 const getInitialForm = (): TripFormData => ({
   workName: '',
@@ -41,6 +42,7 @@ function AppContent() {
   } = useTripForm();
 
   const { history, saveToHistory, deleteHistoryItem } = useHistory();
+  const { isSyncing, pullData, pushAssets, pushVehicles } = useSync();
 
   const [showToast, setShowToast] = useState<{ show: boolean, message: string }>({ show: false, message: '' });
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -54,45 +56,52 @@ function AppContent() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
 
-  // Load Initial Assets/Vehicles with migration for schema changes
+  // Load Initial Assets/Vehicles with hybrid sync
   useEffect(() => {
-    const savedAssets = localStorage.getItem('transport_app_assets');
-    if (savedAssets) {
+    const initData = async () => {
+      // 1. Load from LocalStorage (Immediate UI)
+      const savedAssets = localStorage.getItem('transport_app_assets');
+      const savedVehicles = localStorage.getItem('transport_app_vehicles');
+
+      if (savedAssets) setAssets(JSON.parse(savedAssets));
+      else setAssets(INITIAL_ASSETS);
+
+      if (savedVehicles) setVehicles(JSON.parse(savedVehicles));
+      else setVehicles(INITIAL_VEHICLES);
+
+      // 2. Pull from Supabase (Source of Truth)
       try {
-        const parsed = JSON.parse(savedAssets);
-        // Migrate old fields with multiple possible names and casing
-        const migrated = parsed.map((a: any) => {
-          // Find description
-          const description = a.description || a.descricao || a.desc || '';
-
-          // Find fiscal code (check various common names)
-          const fCode = a.fiscalCode || a.fiscalcode || a.code || a.codigo || a.assetCode || '';
-
-          // Find patrimony
-          const patrimony = a.patrimony || a.patrimonio || a.patrimonio_ || '-';
-
-          return {
-            fiscalCode: String(fCode).trim(),
-            patrimony: String(patrimony).trim(),
-            description: String(description).trim()
-          };
-        }).filter((a: any) => a.fiscalCode || a.description); // Remove empty remnants
-
-        setAssets(migrated.length > 0 ? migrated : INITIAL_ASSETS);
-      } catch (e) {
-        setAssets(INITIAL_ASSETS);
+        const remoteData = await pullData();
+        if (remoteData.assets.length > 0) setAssets(remoteData.assets);
+        if (remoteData.vehicles.length > 0) setVehicles(remoteData.vehicles);
+        triggerToast('Dados sincronizados com a nuvem.');
+      } catch (err) {
+        console.warn('Falha na sincronização inicial (offline?).');
       }
-    } else {
-      setAssets(INITIAL_ASSETS);
+    };
+    initData();
+  }, [pullData]);
+
+  // Handle data persistence (Local + Supabase)
+  const updateAssets = useCallback(async (newAssets: Asset[]) => {
+    setAssets(newAssets);
+    localStorage.setItem('transport_app_assets', JSON.stringify(newAssets));
+    try {
+      await pushAssets(newAssets);
+    } catch (err) {
+      triggerToast('Aviso: Salvo apenas localmente (erro cloud).');
     }
+  }, [pushAssets]);
 
-    const savedVehicles = localStorage.getItem('transport_app_vehicles');
-    setVehicles(savedVehicles ? JSON.parse(savedVehicles) : INITIAL_VEHICLES);
-  }, []);
-
-  // Save Dynamic Data
-  useEffect(() => { localStorage.setItem('transport_app_assets', JSON.stringify(assets)); }, [assets]);
-  useEffect(() => { localStorage.setItem('transport_app_vehicles', JSON.stringify(vehicles)); }, [vehicles]);
+  const updateVehicles = useCallback(async (newVehicles: Vehicle[]) => {
+    setVehicles(newVehicles);
+    localStorage.setItem('transport_app_vehicles', JSON.stringify(newVehicles));
+    try {
+      await pushVehicles(newVehicles);
+    } catch (err) {
+      triggerToast('Aviso: Salvo apenas localmente (erro cloud).');
+    }
+  }, [pushVehicles]);
 
   const triggerToast = (message: string) => {
     setShowToast({ show: true, message });
@@ -221,8 +230,8 @@ function AppContent() {
           onClose={() => setIsAdminOpen(false)}
           assets={assets}
           vehicles={vehicles}
-          onAssetsChange={(newAssets) => setAssets(newAssets)}
-          onVehiclesChange={(newVehicles) => setVehicles(newVehicles)}
+          onAssetsChange={updateAssets}
+          onVehiclesChange={updateVehicles}
           isAuthenticated={isAdminAuthenticated}
           onLogin={() => setIsAdminAuthenticated(true)}
         />
@@ -231,8 +240,10 @@ function AppContent() {
       {/* Toast Notification */}
       {showToast.show && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] bg-slate-800 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <CheckCircle className="h-5 w-5 text-green-400" />
-          <span className="font-medium">{showToast.message}</span>
+          <CheckCircle className={`h-5 w-5 ${isSyncing ? 'text-blue-400 animate-pulse' : 'text-green-400'}`} />
+          <span className="font-medium">
+            {isSyncing ? 'Sincronizando...' : showToast.message}
+          </span>
         </div>
       )}
 
