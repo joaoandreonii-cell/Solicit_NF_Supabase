@@ -172,47 +172,73 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       try {
         const data = evt.target?.result;
         const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
-        if (!Array.isArray(jsonData)) throw new Error("Arquivo inválido.");
+
+        if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+          throw new Error("O arquivo Excel parece estar vazio (sem abas).");
+        }
+
+        let worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        let jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+
+        // If first sheet is empty or has no recognizable data, search others
+        if (jsonData.length === 0 && workbook.SheetNames.length > 1) {
+          for (let i = 1; i < workbook.SheetNames.length; i++) {
+            const wsName = workbook.SheetNames[i];
+            const ws = workbook.Sheets[wsName];
+            const data = XLSX.utils.sheet_to_json(ws) as any[];
+            if (data.length > 0) {
+              worksheet = ws;
+              jsonData = data;
+              break;
+            }
+          }
+        }
+
+        if (!Array.isArray(jsonData) || jsonData.length === 0) {
+          alert("Não encontramos dados em nenhuma aba da planilha. Verifique se o arquivo contém informações.");
+          return;
+        }
 
         if (activeTab === 'assets') {
           const mappedAssets: Asset[] = [];
-          jsonData.forEach((row: any) => {
+
+          jsonData.forEach((row: any, index) => {
             const normalizedRow: Record<string, any> = {};
-            Object.keys(row).forEach(k => normalizedRow[normalizeKey(k)] = row[k]);
+            Object.keys(row).forEach(k => {
+              normalizedRow[normalizeKey(k)] = row[k];
+            });
 
             const fCode = normalizedRow['codigofiscal'] || normalizedRow['fiscalcode'] || normalizedRow['codigo'] || normalizedRow['code'] || normalizedRow['imobilizado'] || normalizedRow['ativo'] || normalizedRow['id'];
-            const patrimony = normalizedRow['patrimonio'] || normalizedRow['patrimony'] || '-';
+            const patrimonyRaw = normalizedRow['patrimonio'] || normalizedRow['patrimony'];
+            const patrimony = patrimonyRaw ? String(patrimonyRaw).trim() : '-';
             const desc = normalizedRow['descricao'] || normalizedRow['description'] || normalizedRow['desc'] || normalizedRow['item'] || normalizedRow['nome'] || normalizedRow['produto'];
 
             if (fCode && desc) {
               mappedAssets.push({
                 fiscalCode: String(fCode).trim(),
-                patrimony: String(patrimony).trim(),
+                patrimony: patrimony,
                 description: String(desc).trim()
               });
-            } else if (!fCode && desc && patrimony !== '-') {
-              // Use patrimony as fiscalCode if code is missing but patrimony is present
+            } else if (!fCode && desc && patrimony !== '-' && patrimony !== '') {
+              // Fallback to patrimony if fiscalCode is missing
               mappedAssets.push({
-                fiscalCode: String(patrimony).trim(),
-                patrimony: String(patrimony).trim(),
+                fiscalCode: patrimony,
+                patrimony: patrimony,
                 description: String(desc).trim()
               });
             }
           });
 
           if (mappedAssets.length === 0) {
-            alert("Nenhum item válido encontrado. Verifique se os cabeçalhos da planilha estão corretos (ex: Código Fiscal, Descrição).");
+            alert(`Encontramos ${jsonData.length} linhas, mas nenhuma tinha as colunas esperadas (ex: Código Fiscal e Descrição). Verifique os títulos das colunas.`);
             return;
           }
 
           if (confirm(`Importar ${mappedAssets.length} imobilizados? (Dados existentes serão preservados e atualizados)`)) {
-            // Merge logic: maintain existing assets and update/add imported ones
             const existingMap = new Map(assets.map(a => [a.fiscalCode, a]));
             mappedAssets.forEach(a => existingMap.set(a.fiscalCode, a));
             onAssetsChange(Array.from(existingMap.values()));
+            alert("Importação de imobilizados concluída com sucesso!");
           }
         } else {
           const mappedVehicles: Vehicle[] = [];
@@ -223,11 +249,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             const model = normalizedRow['modelo'] || normalizedRow['model'] || normalizedRow['descricao'];
             const unit = normalizedRow['unidade'] || normalizedRow['unit'] || '-';
             const sector = normalizedRow['setor'] || normalizedRow['sector'] || '-';
-            if (plate && model) mappedVehicles.push({ plate: String(plate).trim(), model: String(model).trim(), unit: String(unit).trim(), sector: String(sector).trim() });
+
+            if (plate && model) {
+              mappedVehicles.push({
+                plate: String(plate).trim(),
+                model: String(model).trim(),
+                unit: String(unit).trim(),
+                sector: String(sector).trim()
+              });
+            }
           });
 
           if (mappedVehicles.length === 0) {
-            alert("Nenhum veículo válido encontrado. Verifique se os cabeçalhos da planilha estão corretos (ex: Placa, Modelo).");
+            alert(`Encontramos ${jsonData.length} linhas, mas nenhuma tinha as colunas esperadas (ex: Placa e Modelo). Verifique os títulos das colunas.`);
             return;
           }
 
@@ -235,10 +269,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             const existingMap = new Map(vehicles.map(v => [v.plate, v]));
             mappedVehicles.forEach(v => existingMap.set(v.plate, v));
             onVehiclesChange(Array.from(existingMap.values()));
+            alert("Importação de veículos concluída com sucesso!");
           }
         }
-      } catch (error) {
-        alert("Erro ao ler arquivo Excel.");
+      } catch (error: any) {
+        console.error("XLSX Import Error:", error);
+        alert(`Erro ao processar arquivo: ${error.message || 'Erro desconhecido'}`);
       }
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
