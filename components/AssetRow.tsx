@@ -12,7 +12,7 @@ interface AssetRowProps {
 
 export const AssetRow: React.FC<AssetRowProps> = ({ item, assets, onUpdate, onRemove }) => {
   const assetOptions = React.useMemo(() => assets.map(a => ({
-    value: a.fiscalCode,
+    value: `${a.fiscalCode}|${a.patrimony}`,
     label: a.description,
     subLabel: `${a.fiscalCode} | ${a.patrimony}`
   })), [assets]);

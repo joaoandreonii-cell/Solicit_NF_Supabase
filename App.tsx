@@ -104,7 +104,7 @@ function AppContent() {
   }, [pushVehicles]);
 
   const deleteAsset = useCallback(async (id: string) => {
-    const updated = assets.filter(a => a.fiscalCode !== id);
+    const updated = assets.filter(a => `${a.fiscalCode}|${a.patrimony}` !== id);
     setAssets(updated);
     localStorage.setItem('transport_app_assets', JSON.stringify(updated));
     try {
@@ -183,8 +183,13 @@ function AppContent() {
     const assetListString = selectedAssets
       .filter(item => item.assetFiscalCode)
       .map(item => {
-        const asset = assets.find(a => a.fiscalCode === item.assetFiscalCode);
-        return `${item.quantity} - ${item.assetFiscalCode} - ${asset?.description || 'Item desconhecido'}`;
+        // item.assetFiscalCode now contains "code|patrimony"
+        const [code, patrimony] = item.assetFiscalCode.includes('|')
+          ? item.assetFiscalCode.split('|')
+          : [item.assetFiscalCode, '-'];
+
+        const asset = assets.find(a => a.fiscalCode === code && a.patrimony === patrimony);
+        return `${item.quantity} - ${code} - ${asset?.description || 'Item desconhecido'}`;
       })
       .join('\n');
 

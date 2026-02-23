@@ -46,10 +46,10 @@ export const useSync = () => {
                 updated_at: new Date().toISOString()
             }));
 
-            // Upsert assets
+            // Upsert assets using composite key (supported if unique index exists)
             const { error } = await supabase
                 .from('assets')
-                .upsert(formatted, { onConflict: 'fiscal_code' });
+                .upsert(formatted, { onConflict: 'fiscal_code, patrimony' });
 
             if (error) throw error;
         } catch (error) {
@@ -103,13 +103,21 @@ export const useSync = () => {
     const deleteFromRemote = useCallback(async (table: 'assets' | 'vehicles', id: string) => {
         setIsSyncing(true);
         try {
-            const idField = table === 'assets' ? 'fiscal_code' : 'plate';
-            const { error } = await supabase
-                .from(table)
-                .delete()
-                .eq(idField, id);
-
-            if (error) throw error;
+            if (table === 'assets') {
+                const [fCode, patrimony] = id.split('|');
+                const { error } = await supabase
+                    .from(table)
+                    .delete()
+                    .eq('fiscal_code', fCode)
+                    .eq('patrimony', patrimony);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from(table)
+                    .delete()
+                    .eq('plate', id);
+                if (error) throw error;
+            }
         } catch (error) {
             console.error(`Error deleting from ${table} in Supabase:`, error);
             throw error;

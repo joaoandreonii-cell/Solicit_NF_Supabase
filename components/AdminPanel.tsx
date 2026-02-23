@@ -111,6 +111,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setEditValues({ field1: '', field2: '', field3: '', field4: '', field5: '' });
   };
 
+  const getAssetId = (a: Asset) => `${a.fiscalCode}|${a.patrimony}`;
+
   const saveEdit = (oldId: string) => {
     const { field1, field2, field3, field4, field5 } = editValues;
 
@@ -120,12 +122,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
 
     if (activeTab === 'assets') {
-      // Check for duplicate fiscalCode (excluding current)
-      if (field1 !== oldId && assets.some(a => a.fiscalCode === field1)) {
-        alert("Já existe um item com este código fiscal!");
-        return;
-      }
-      const updated = assets.map(a => a.fiscalCode === oldId ? { fiscalCode: field1, patrimony: field2, description: field3 } : a);
+      const updated = assets.map(a => getAssetId(a) === oldId ? { fiscalCode: field1, patrimony: field2, description: field3 } : a);
       onAssetsChange(updated);
     } else {
       // Check for duplicate plate (excluding current)
@@ -235,8 +232,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           }
 
           if (confirm(`Importar ${mappedAssets.length} imobilizados? (Dados existentes serão preservados e atualizados)`)) {
-            const existingMap = new Map(assets.map(a => [a.fiscalCode, a]));
-            mappedAssets.forEach(a => existingMap.set(a.fiscalCode, a));
+            // Merge logic: use composite key (fiscalCode + patrimony) to allow same-code items
+            const existingMap = new Map();
+            assets.forEach(a => existingMap.set(getAssetId(a), a));
+            mappedAssets.forEach(a => existingMap.set(getAssetId(a), a));
             onAssetsChange(Array.from(existingMap.values()));
             alert("Importação de imobilizados concluída com sucesso!");
           }
@@ -298,7 +297,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     if (!confirm("Excluir este item?")) return;
     if (activeTab === 'assets') {
       if (onDeleteAsset) onDeleteAsset(id);
-      else onAssetsChange(assets.filter(a => a.fiscalCode !== id));
+      else onAssetsChange(assets.filter(a => getAssetId(a) !== id));
     } else {
       if (onDeleteVehicle) onDeleteVehicle(id);
       else onVehiclesChange(vehicles.filter(v => v.plate !== id));
@@ -308,7 +307,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleAddManual = () => {
     if (activeTab === 'assets') {
       if (!newAsset.fiscalCode || !newAsset.description) return alert("Preencha Código Fiscal e Descrição");
-      if (assets.some(a => a.fiscalCode === newAsset.fiscalCode)) return alert("Já existe este código fiscal!");
+      const newId = getAssetId(newAsset);
+      if (assets.some(a => getAssetId(a) === newId)) return alert("Já existe este item com este código e patrimônio!");
       onAssetsChange([...assets, newAsset]);
       setNewAsset({ fiscalCode: '', patrimony: '', description: '' });
     } else {
@@ -441,7 +441,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredList.map((item, idx) => {
-                  const id = activeTab === 'assets' ? (item as Asset).fiscalCode : (item as Vehicle).plate;
+                  const id = activeTab === 'assets' ? getAssetId(item as Asset) : (item as Vehicle).plate;
                   const val1 = activeTab === 'assets' ? (item as Asset).fiscalCode : (item as Vehicle).plate;
                   const val2 = activeTab === 'assets' ? (item as Asset).patrimony : (item as Vehicle).model;
                   const val3 = activeTab === 'assets' ? (item as Asset).description : (item as Vehicle).unit;
