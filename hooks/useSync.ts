@@ -100,11 +100,30 @@ export const useSync = () => {
         }
     }, []);
 
+    const deleteFromRemote = useCallback(async (table: 'assets' | 'vehicles', id: string) => {
+        setIsSyncing(true);
+        try {
+            const idField = table === 'assets' ? 'fiscal_code' : 'plate';
+            const { error } = await supabase
+                .from(table)
+                .delete()
+                .eq(idField, id);
+
+            if (error) throw error;
+        } catch (error) {
+            console.error(`Error deleting from ${table} in Supabase:`, error);
+            throw error;
+        } finally {
+            setIsSyncing(false);
+        }
+    }, []);
+
     return {
         isSyncing,
         pullData,
         pushAssets,
         pushVehicles,
-        clearRemoteStorage
+        clearRemoteStorage,
+        deleteFromRemote
     };
 };

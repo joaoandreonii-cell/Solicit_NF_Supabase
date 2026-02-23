@@ -24,8 +24,10 @@ interface AdminPanelProps {
   isOpen: boolean;
   assets: Asset[];
   onAssetsChange: (assets: Asset[]) => void;
+  onDeleteAsset?: (id: string) => void;
   vehicles: Vehicle[];
   onVehiclesChange: (vehicles: Vehicle[]) => void;
+  onDeleteVehicle?: (plate: string) => void;
   onClose: () => void;
   isAuthenticated: boolean;
   onLogin: () => void;
@@ -35,8 +37,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   isOpen,
   assets,
   onAssetsChange,
+  onDeleteAsset,
   vehicles,
   onVehiclesChange,
+  onDeleteVehicle,
   onClose,
   isAuthenticated,
   onLogin
@@ -226,8 +230,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const handleDeleteItem = (id: string) => {
     if (!confirm("Excluir este item?")) return;
-    if (activeTab === 'assets') onAssetsChange(assets.filter(a => a.fiscalCode !== id));
-    else onVehiclesChange(vehicles.filter(v => v.plate !== id));
+    if (activeTab === 'assets') {
+      if (onDeleteAsset) onDeleteAsset(id);
+      else onAssetsChange(assets.filter(a => a.fiscalCode !== id));
+    } else {
+      if (onDeleteVehicle) onDeleteVehicle(id);
+      else onVehiclesChange(vehicles.filter(v => v.plate !== id));
+    }
   };
 
   const handleAddManual = () => {

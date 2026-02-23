@@ -42,7 +42,7 @@ function AppContent() {
   } = useTripForm();
 
   const { history, saveToHistory, deleteHistoryItem } = useHistory();
-  const { isSyncing, pullData, pushAssets, pushVehicles } = useSync();
+  const { isSyncing, pullData, pushAssets, pushVehicles, deleteFromRemote } = useSync();
 
   const [showToast, setShowToast] = useState<{ show: boolean, message: string }>({ show: false, message: '' });
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -102,6 +102,30 @@ function AppContent() {
       triggerToast('Aviso: Salvo apenas localmente (erro cloud).');
     }
   }, [pushVehicles]);
+
+  const deleteAsset = useCallback(async (id: string) => {
+    const updated = assets.filter(a => a.fiscalCode !== id);
+    setAssets(updated);
+    localStorage.setItem('transport_app_assets', JSON.stringify(updated));
+    try {
+      await deleteFromRemote('assets', id);
+      triggerToast('Item excluído da nuvem.');
+    } catch (err) {
+      triggerToast('Erro ao excluir da nuvem.');
+    }
+  }, [assets, deleteFromRemote]);
+
+  const deleteVehicle = useCallback(async (plate: string) => {
+    const updated = vehicles.filter(v => v.plate !== plate);
+    setVehicles(updated);
+    localStorage.setItem('transport_app_vehicles', JSON.stringify(updated));
+    try {
+      await deleteFromRemote('vehicles', plate);
+      triggerToast('Veículo excluído da nuvem.');
+    } catch (err) {
+      triggerToast('Erro ao excluir da nuvem.');
+    }
+  }, [vehicles, deleteFromRemote]);
 
   const triggerToast = (message: string) => {
     setShowToast({ show: true, message });
@@ -232,6 +256,8 @@ function AppContent() {
           vehicles={vehicles}
           onAssetsChange={updateAssets}
           onVehiclesChange={updateVehicles}
+          onDeleteAsset={deleteAsset}
+          onDeleteVehicle={deleteVehicle}
           isAuthenticated={isAdminAuthenticated}
           onLogin={() => setIsAdminAuthenticated(true)}
         />
