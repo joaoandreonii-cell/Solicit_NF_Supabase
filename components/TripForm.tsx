@@ -153,8 +153,8 @@ export const TripForm: React.FC<TripFormProps> = ({
                             )}
                         </div>
 
-                        {/* Placa Manual (Shown only when 'OUTRO' is selected, but keeps space in desktop) */}
-                        <div className={formData.vehiclePlate === 'OUTRO' ? 'block animate-in fade-in slide-in-from-top-2 duration-300' : 'hidden lg:block lg:invisible pointer-events-none'}>
+                        {/* Placa Manual (Shown only when 'OUTRO' is selected) */}
+                        <div className={formData.vehiclePlate === 'OUTRO' ? 'block animate-in fade-in slide-in-from-top-2 duration-300' : 'hidden'}>
                             {formData.vehiclePlate === 'OUTRO' && (
                                 <div>
                                     <label htmlFor="customVehiclePlate" className="block text-sm font-medium text-slate-700">Placa do Veículo (Manual)</label>
