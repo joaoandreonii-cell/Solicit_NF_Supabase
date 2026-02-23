@@ -198,8 +198,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
         if (activeTab === 'assets') {
           const mappedAssets: Asset[] = [];
+          let skippedMissingData = 0;
+          let skippedDuplicatesInFile = 0;
+          const fileKeys = new Set<string>();
 
-          jsonData.forEach((row: any, index) => {
+          jsonData.forEach((row: any) => {
             const normalizedRow: Record<string, any> = {};
             Object.keys(row).forEach(k => {
               normalizedRow[normalizeKey(k)] = row[k];
@@ -210,19 +213,35 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             const patrimony = patrimonyRaw ? String(patrimonyRaw).trim() : '-';
             const desc = normalizedRow['descricao'] || normalizedRow['description'] || normalizedRow['desc'] || normalizedRow['item'] || normalizedRow['nome'] || normalizedRow['produto'];
 
+            let itemToPush: Asset | null = null;
+
             if (fCode && desc) {
-              mappedAssets.push({
+              itemToPush = {
                 fiscalCode: String(fCode).trim(),
                 patrimony: patrimony,
                 description: String(desc).trim()
-              });
+              };
             } else if (!fCode && desc && patrimony !== '-' && patrimony !== '') {
-              // Fallback to patrimony if fiscalCode is missing
-              mappedAssets.push({
+              itemToPush = {
                 fiscalCode: patrimony,
                 patrimony: patrimony,
                 description: String(desc).trim()
-              });
+              };
+            }
+
+            if (itemToPush) {
+              const key = `${itemToPush.fiscalCode}|${itemToPush.patrimony}`;
+              if (fileKeys.has(key)) {
+                skippedDuplicatesInFile++;
+              } else {
+                fileKeys.add(key);
+                mappedAssets.push(itemToPush);
+              }
+            } else {
+              // Only count as skipped if it's not a completely empty row (XLSX sometimes adds empty rows at the end)
+              if (Object.values(row).some(v => v !== null && v !== '')) {
+                skippedMissingData++;
+              }
             }
           });
 
@@ -231,16 +250,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             return;
           }
 
-          if (confirm(`Importar ${mappedAssets.length} imobilizados? (Dados existentes serão preservados e atualizados)`)) {
+          let confirmMsg = `Importar ${mappedAssets.length} imobilizados? (Dados existentes serão preservados e atualizados)`;
+          if (skippedMissingData > 0 || skippedDuplicatesInFile > 0) {
+            confirmMsg += `\n\nInfo sobre a planilha:`;
+            if (skippedMissingData > 0) confirmMsg += `\n- ${skippedMissingData} linhas ignoradas por falta de Código/Descrição.`;
+            if (skippedDuplicatesInFile > 0) confirmMsg += `\n- ${skippedDuplicatesInFile} linhas ignoradas por serem duplicadas dentro do próprio arquivo.`;
+          }
+
+          if (confirm(confirmMsg)) {
             // Merge logic: use composite key (fiscalCode + patrimony) to allow same-code items
             const existingMap = new Map();
             assets.forEach(a => existingMap.set(getAssetId(a), a));
             mappedAssets.forEach(a => existingMap.set(getAssetId(a), a));
             onAssetsChange(Array.from(existingMap.values()));
-            alert("Importação de imobilizados concluída com sucesso!");
+            alert(`Importação concluída com sucesso! Total de itens no banco: ${existingMap.size}`);
           }
         } else {
           const mappedVehicles: Vehicle[] = [];
+          let skippedMissingData = 0;
+          let skippedDuplicatesInFile = 0;
+          const fileKeys = new Set<string>(); // To track duplicates within the file
+
           jsonData.forEach((row: any) => {
             const normalizedRow: Record<string, any> = {};
             Object.keys(row).forEach(k => normalizedRow[normalizeKey(k)] = row[k]);
