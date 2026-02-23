@@ -1,0 +1,11 @@
+Conflict Test Report
+====================
+
+Error: {
+  "code": "23505",
+  "details": null,
+  "hint": null,
+  "message": "duplicate key value violates unique constraint \"assets_pkey\""
+}
+
+CONCLUSION: fiscal_code is currently the Primary Key. It needs to be changed to a composite key (fiscal_code, patrimony).

@@ -242,13 +242,14 @@ export const TripForm: React.FC<TripFormProps> = ({
                     </div>
 
                     <div className="space-y-1">
-                        {selectedAssets.map((item) => (
+                        {selectedAssets.map((item, index) => (
                             <AssetRow
                                 key={item.id}
                                 item={item}
                                 assets={assets}
                                 onUpdate={updateAsset}
                                 onRemove={removeAsset}
+                                onEnter={index === selectedAssets.length - 1 ? addAssetRow : undefined}
                             />
                         ))}
                         {selectedAssets.length === 0 && (

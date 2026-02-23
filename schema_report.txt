@@ -1,0 +1,7 @@
+Schema Inspection Report
+========================
+
+Assets Columns: 
+
+Upsert Test Results:
+Success on Upsert!

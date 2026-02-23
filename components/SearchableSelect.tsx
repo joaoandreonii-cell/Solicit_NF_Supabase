@@ -17,6 +17,7 @@ interface SearchableSelectProps {
   className?: string;
   inputClassName?: string;
   error?: boolean;
+  onEnter?: () => void;
 }
 
 // Helper function to normalize text (remove accents and convert to lowercase)
@@ -36,7 +37,8 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   label,
   className = "",
   inputClassName = "",
-  error
+  error,
+  onEnter
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -109,6 +111,12 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
         e.preventDefault();
         if (focusedIndex >= 0 && focusedIndex < filteredOptions.length) {
           handleSelect(filteredOptions[focusedIndex]);
+        } else if (filteredOptions.length === 1) {
+          // Auto-select if there is exactly one match
+          handleSelect(filteredOptions[0]);
+        } else if (onEnter) {
+          // If no specific selection, trigger parent's enter logic (e.g. add new row)
+          onEnter();
         }
         break;
       case 'Escape':

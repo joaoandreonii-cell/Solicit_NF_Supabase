@@ -8,9 +8,10 @@ interface AssetRowProps {
   assets: Asset[];
   onUpdate: (id: string, field: keyof SelectedAsset, value: string | number) => void;
   onRemove: (id: string) => void;
+  onEnter?: () => void;
 }
 
-export const AssetRow: React.FC<AssetRowProps> = ({ item, assets, onUpdate, onRemove }) => {
+export const AssetRow: React.FC<AssetRowProps> = ({ item, assets, onUpdate, onRemove, onEnter }) => {
   const assetOptions = React.useMemo(() => assets.map(a => ({
     value: `${a.fiscalCode}|${a.patrimony}`,
     label: a.description,
@@ -32,6 +33,7 @@ export const AssetRow: React.FC<AssetRowProps> = ({ item, assets, onUpdate, onRe
           options={assetOptions}
           value={item.assetFiscalCode}
           onChange={(val) => onUpdate(item.id, 'assetFiscalCode', val)}
+          onEnter={onEnter}
           placeholder="Digite para buscar..."
           className="w-full"
           inputClassName="sm:text-sm h-9"
