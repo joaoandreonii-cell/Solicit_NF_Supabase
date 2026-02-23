@@ -172,26 +172,6 @@ export const TripForm: React.FC<TripFormProps> = ({
                             )}
                         </div>
 
-                        <div>
-                            <label htmlFor="driverName" className="block text-sm font-medium text-slate-700">Motorista</label>
-                            <div className="relative mt-1">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <User className="h-4 w-4 text-gray-400" />
-                                </div>
-                                <input
-                                    type="text"
-                                    id="driverName"
-                                    name="driverName"
-                                    value={formData.driverName}
-                                    onChange={handleInputChange}
-                                    className={`block w-full bg-white text-slate-900 pl-10 rounded-md shadow-sm focus:ring-blue-500 border p-2 ${errors.driverName ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
-                                    placeholder="Nome completo"
-                                    aria-invalid={!!errors.driverName}
-                                    aria-describedby={errors.driverName ? "driverName-error" : undefined}
-                                />
-                            </div>
-                            {errors.driverName && <p className="mt-1 text-xs text-red-500" id="driverName-error">{errors.driverName}</p>}
-                        </div>
 
                         <div>
                             <label htmlFor="exitDate" className="block text-sm font-medium text-slate-700">Data de Saída</label>
@@ -221,6 +201,27 @@ export const TripForm: React.FC<TripFormProps> = ({
                                 aria-describedby={errors.exitTime ? "exitTime-error" : undefined}
                             />
                             {errors.exitTime && <p className="mt-1 text-xs text-red-500" id="exitTime-error">{errors.exitTime}</p>}
+                        </div>
+
+                        <div>
+                            <label htmlFor="driverName" className="block text-sm font-medium text-slate-700">Motorista</label>
+                            <div className="relative mt-1">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <User className="h-4 w-4 text-gray-400" />
+                                </div>
+                                <input
+                                    type="text"
+                                    id="driverName"
+                                    name="driverName"
+                                    value={formData.driverName}
+                                    onChange={handleInputChange}
+                                    className={`block w-full bg-white text-slate-900 pl-10 rounded-md shadow-sm focus:ring-blue-500 border p-2 ${errors.driverName ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                                    placeholder="Nome completo"
+                                    aria-invalid={!!errors.driverName}
+                                    aria-describedby={errors.driverName ? "driverName-error" : undefined}
+                                />
+                            </div>
+                            {errors.driverName && <p className="mt-1 text-xs text-red-500" id="driverName-error">{errors.driverName}</p>}
                         </div>
                     </div>
                 </div>
