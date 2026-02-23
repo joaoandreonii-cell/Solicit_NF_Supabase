@@ -25,6 +25,7 @@ export interface TripFormData {
   destinationCity: string;
   driverName: string;
   vehiclePlate: string;
+  vehicleSector: string; // New field for customizable sector
   totalWeight: number;
   volume: number;
   hasOtherMaterials?: 'Sim' | 'Não';

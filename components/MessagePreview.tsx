@@ -43,7 +43,7 @@ export const MessagePreview: React.FC<MessagePreviewProps> = ({
         message += `*ESTRUTURA:* ${formData.structureId}\n`;
         message += `*DESTINO:* ${formData.destinationCity}\n`;
         message += `*MOTORISTA:* ${formData.driverName}\n`;
-        message += `*PLACA:* ${formData.vehiclePlate}${getVehicleDetails() ? ` - ${getVehicleDetails()}` : ''}\n`;
+        message += `*PLACA:* ${formData.vehiclePlate}${formData.vehicleSector ? ` (${formData.vehicleSector})` : ''}\n`;
         message += `*DATA/HORA SAÍDA:* ${formData.exitDate.split('-').reverse().join('/')} às ${formData.exitTime}\n\n`;
 
         message += `*ITENS DO ATIVO:*\n`;
