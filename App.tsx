@@ -23,7 +23,6 @@ const getInitialForm = (): TripFormData => ({
   destinationCity: '',
   driverName: '',
   vehiclePlate: '',
-  vehicleSector: '',
   exitDate: '',
   exitTime: '',
   totalWeight: 0,
@@ -181,6 +180,9 @@ function AppContent() {
 
   const generateMessageText = () => {
     const vehicle = vehicles.find(v => v.plate === formData.vehiclePlate);
+    const vehicleDisplay = formData.vehiclePlate === 'OUTRO'
+      ? formData.customVehiclePlate
+      : `${formData.vehiclePlate}${vehicle ? ` (${vehicle.model})` : ''}`;
     const assetListString = selectedAssets
       .filter(item => item.assetFiscalCode)
       .map(item => {
@@ -200,8 +202,7 @@ function AppContent() {
     message += `Horário: ${formData.exitTime}\n`;
     message += `Cidade destino: ${formData.destinationCity}\n`;
     message += `Motorista: ${formData.driverName}\n`;
-    message += `Veículo: ${formData.vehiclePlate} (${vehicle?.model || ''})\n`;
-    if (formData.vehicleSector) message += `Setor: ${formData.vehicleSector}\n`;
+    message += `Veículo: ${vehicleDisplay}\n`;
     message += `Peso: ${formData.totalWeight}kg\n`;
     message += `Volume: ${formData.volume} vol\n`;
     if (formData.hasOtherMaterials) message += `Se Haverá Materiais: ${formData.hasOtherMaterials}\n`;

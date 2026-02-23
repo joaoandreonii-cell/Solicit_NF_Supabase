@@ -131,39 +131,37 @@ export const TripForm: React.FC<TripFormProps> = ({
                             <label htmlFor="vehiclePlate" className="block text-sm font-medium text-slate-700">Selecione o Veículo</label>
                             <SearchableSelect
                                 id="vehiclePlate"
-                                options={vehicles.map(v => ({ value: v.plate, label: v.plate, subLabel: v.model }))}
+                                options={[
+                                    ...vehicles.map(v => ({ value: v.plate, label: v.plate, subLabel: v.model })),
+                                    { value: 'OUTRO', label: 'Outro: (Informar Placa)', subLabel: 'Veículo não cadastrado' }
+                                ]}
                                 value={formData.vehiclePlate}
                                 onChange={(val) => {
-                                    const selectedVehicle = vehicles.find(v => v.plate === val);
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        vehiclePlate: val,
-                                        vehicleSector: selectedVehicle?.sector || ''
-                                    }));
+                                    setFormData(prev => ({ ...prev, vehiclePlate: val }));
                                     if (errors.vehiclePlate) setErrors(prev => ({ ...prev, vehiclePlate: undefined }));
                                 }}
                                 placeholder="Busque pela placa ou modelo"
                                 className="mt-1"
                                 error={!!errors.vehiclePlate}
                             />
-                            {errors.vehiclePlate && <p className="mt-1 text-xs text-red-500">{errors.vehiclePlate}</p>}
-                        </div>
-
-                        <div>
-                            <label htmlFor="vehicleSector" className="block text-sm font-medium text-slate-700">Setor</label>
-                            <input
-                                type="text"
-                                id="vehicleSector"
-                                name="vehicleSector"
-                                value={formData.vehicleSector}
-                                onChange={handleInputChange}
-                                className="mt-1 block w-full bg-white text-slate-900 rounded-md shadow-sm focus:ring-blue-500 border border-gray-300 p-2 focus:border-blue-500"
-                                placeholder="Auto-preenchido ao selecionar veículo"
-                            />
-                            {formData.vehiclePlate && (
+                            {formData.vehiclePlate === 'OUTRO' ? (
+                                <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <label htmlFor="customVehiclePlate" className="block text-xs font-semibold text-blue-700 mb-1 uppercase tracking-wider">Placa do Veículo (Manual)</label>
+                                    <input
+                                        type="text"
+                                        id="customVehiclePlate"
+                                        name="customVehiclePlate"
+                                        value={formData.customVehiclePlate}
+                                        onChange={handleInputChange}
+                                        className={`block w-full bg-blue-50/30 text-slate-900 rounded-md shadow-sm focus:ring-blue-500 border p-2 ${errors.customVehiclePlate ? 'border-red-500 focus:border-red-500' : 'border-blue-200 focus:border-blue-500'}`}
+                                        placeholder="Ex: ABC-1234"
+                                    />
+                                    {errors.customVehiclePlate && <p className="mt-1 text-xs text-red-500">{errors.customVehiclePlate}</p>}
+                                </div>
+                            ) : formData.vehiclePlate && (
                                 <div className="text-xs text-blue-600 mt-1 font-medium space-y-0.5">
                                     <p>Modelo: {vehicles.find(v => v.plate === formData.vehiclePlate)?.model}</p>
-                                    <p>Unidade: {vehicles.find(v => v.plate === formData.vehiclePlate)?.unit}</p>
+                                    <p>Unidade: {vehicles.find(v => v.plate === formData.vehiclePlate)?.unit} | Setor: {vehicles.find(v => v.plate === formData.vehiclePlate)?.sector}</p>
                                 </div>
                             )}
                         </div>

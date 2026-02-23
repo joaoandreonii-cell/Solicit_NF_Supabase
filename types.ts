@@ -25,13 +25,13 @@ export interface TripFormData {
   destinationCity: string;
   driverName: string;
   vehiclePlate: string;
-  vehicleSector: string; // New field for customizable sector
   totalWeight: number;
   volume: number;
   hasOtherMaterials?: 'Sim' | 'Não';
   returnDate: string;
   returnTime: string;
   observations: string; // New field
+  customVehiclePlate?: string;
   customVehicleModel?: string;
   customVehicleUnit?: string;
   customVehicleSector?: string;

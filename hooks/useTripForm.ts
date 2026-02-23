@@ -7,14 +7,14 @@ const getInitialForm = (): TripFormData => ({
     destinationCity: '',
     driverName: '',
     vehiclePlate: '',
-    vehicleSector: '',
     exitDate: '',
     exitTime: '',
     totalWeight: 0,
     volume: 0,
     returnDate: '',
     returnTime: '',
-    observations: ''
+    observations: '',
+    customVehiclePlate: ''
 });
 
 export const useTripForm = () => {
@@ -57,6 +57,9 @@ export const useTripForm = () => {
         if (!formData.destinationCity.trim()) newErrors.destinationCity = 'Cidade destino é obrigatória';
         if (!formData.driverName.trim()) newErrors.driverName = 'Nome do motorista é obrigatório';
         if (!formData.vehiclePlate.trim()) newErrors.vehiclePlate = 'Selecione um veículo';
+        if (formData.vehiclePlate === 'OUTRO' && !formData.customVehiclePlate?.trim()) {
+            newErrors.customVehiclePlate = 'Placa é obrigatória para outro veículo';
+        }
         if (!formData.exitDate) newErrors.exitDate = 'Data de saída é obrigatória';
         if (!formData.exitTime) newErrors.exitTime = 'Horário de saída é obrigatório';
 
