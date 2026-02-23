@@ -199,7 +199,13 @@ function AppContent() {
     message += `Horário: ${formData.exitTime}\n`;
     message += `Cidade destino: ${formData.destinationCity}\n`;
     message += `Motorista: ${formData.driverName}\n`;
-    message += `Veículo: ${formData.vehiclePlate} (${vehicle?.model || ''})\n`;
+
+    if (formData.vehiclePlate) {
+      message += `Veículo: ${formData.vehiclePlate} (${vehicle?.model || ''})\n`;
+    } else {
+      message += `Veículo: -\n`;
+    }
+
     message += `Peso: ${formData.totalWeight}kg\n`;
     message += `Volume: ${formData.volume} vol\n`;
     if (formData.hasOtherMaterials) message += `Se Haverá Materiais: ${formData.hasOtherMaterials}\n`;

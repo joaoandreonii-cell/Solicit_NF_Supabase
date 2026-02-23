@@ -128,7 +128,7 @@ export const TripForm: React.FC<TripFormProps> = ({
                         </div>
 
                         <div>
-                            <label htmlFor="vehiclePlate" className="block text-sm font-medium text-slate-700">Selecione o Veículo</label>
+                            <label htmlFor="vehiclePlate" className="block text-sm font-medium text-slate-700">Selecione o Veículo (Opcional)</label>
                             <SearchableSelect
                                 id="vehiclePlate"
                                 options={vehicles.map(v => ({ value: v.plate, label: v.plate, subLabel: v.model }))}

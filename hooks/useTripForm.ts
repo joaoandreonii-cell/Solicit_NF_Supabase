@@ -55,7 +55,7 @@ export const useTripForm = () => {
         if (!formData.structureId.trim()) newErrors.structureId = 'Código da estrutura é obrigatório';
         if (!formData.destinationCity.trim()) newErrors.destinationCity = 'Cidade destino é obrigatória';
         if (!formData.driverName.trim()) newErrors.driverName = 'Nome do motorista é obrigatório';
-        if (!formData.vehiclePlate.trim()) newErrors.vehiclePlate = 'Selecione um veículo';
+        // if (!formData.vehiclePlate.trim()) newErrors.vehiclePlate = 'Selecione um veículo';
         if (!formData.exitDate) newErrors.exitDate = 'Data de saída é obrigatória';
         if (!formData.exitTime) newErrors.exitTime = 'Horário de saída é obrigatório';
 
