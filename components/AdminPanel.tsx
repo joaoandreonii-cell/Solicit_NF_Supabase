@@ -80,7 +80,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // DATA HELPERS
   // ---------------------------------------------------------------------------
   const normalizeKey = (key: string) =>
-    key.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    key.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "").toLowerCase().trim();
 
   const getFilteredData = () => {
     const term = searchTerm.toLowerCase();
@@ -182,30 +182,60 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           jsonData.forEach((row: any) => {
             const normalizedRow: Record<string, any> = {};
             Object.keys(row).forEach(k => normalizedRow[normalizeKey(k)] = row[k]);
-            const fCode = normalizedRow['codigofiscal'] || normalizedRow['fiscalcode'] || normalizedRow['codigo'] || normalizedRow['code'];
+
+            const fCode = normalizedRow['codigofiscal'] || normalizedRow['fiscalcode'] || normalizedRow['codigo'] || normalizedRow['code'] || normalizedRow['imobilizado'] || normalizedRow['ativo'] || normalizedRow['id'];
             const patrimony = normalizedRow['patrimonio'] || normalizedRow['patrimony'] || '-';
-            const desc = normalizedRow['descricao'] || normalizedRow['description'] || normalizedRow['desc'];
+            const desc = normalizedRow['descricao'] || normalizedRow['description'] || normalizedRow['desc'] || normalizedRow['item'] || normalizedRow['nome'] || normalizedRow['produto'];
+
             if (fCode && desc) {
               mappedAssets.push({
                 fiscalCode: String(fCode).trim(),
                 patrimony: String(patrimony).trim(),
                 description: String(desc).trim()
               });
+            } else if (!fCode && desc && patrimony !== '-') {
+              // Use patrimony as fiscalCode if code is missing but patrimony is present
+              mappedAssets.push({
+                fiscalCode: String(patrimony).trim(),
+                patrimony: String(patrimony).trim(),
+                description: String(desc).trim()
+              });
             }
           });
-          if (mappedAssets.length > 0 && confirm(`Importar ${mappedAssets.length} imobilizados?`)) onAssetsChange(mappedAssets);
+
+          if (mappedAssets.length === 0) {
+            alert("Nenhum item válido encontrado. Verifique se os cabeçalhos da planilha estão corretos (ex: Código Fiscal, Descrição).");
+            return;
+          }
+
+          if (confirm(`Importar ${mappedAssets.length} imobilizados? (Dados existentes serão preservados e atualizados)`)) {
+            // Merge logic: maintain existing assets and update/add imported ones
+            const existingMap = new Map(assets.map(a => [a.fiscalCode, a]));
+            mappedAssets.forEach(a => existingMap.set(a.fiscalCode, a));
+            onAssetsChange(Array.from(existingMap.values()));
+          }
         } else {
           const mappedVehicles: Vehicle[] = [];
           jsonData.forEach((row: any) => {
             const normalizedRow: Record<string, any> = {};
             Object.keys(row).forEach(k => normalizedRow[normalizeKey(k)] = row[k]);
-            const plate = normalizedRow['placa'] || normalizedRow['plate'];
-            const model = normalizedRow['modelo'] || normalizedRow['model'];
+            const plate = normalizedRow['placa'] || normalizedRow['plate'] || normalizedRow['veiculo'];
+            const model = normalizedRow['modelo'] || normalizedRow['model'] || normalizedRow['descricao'];
             const unit = normalizedRow['unidade'] || normalizedRow['unit'] || '-';
             const sector = normalizedRow['setor'] || normalizedRow['sector'] || '-';
             if (plate && model) mappedVehicles.push({ plate: String(plate).trim(), model: String(model).trim(), unit: String(unit).trim(), sector: String(sector).trim() });
           });
-          if (mappedVehicles.length > 0 && confirm(`Importar ${mappedVehicles.length} veículos?`)) onVehiclesChange(mappedVehicles);
+
+          if (mappedVehicles.length === 0) {
+            alert("Nenhum veículo válido encontrado. Verifique se os cabeçalhos da planilha estão corretos (ex: Placa, Modelo).");
+            return;
+          }
+
+          if (confirm(`Importar ${mappedVehicles.length} veículos? (Dados existentes serão preservados e atualizados)`)) {
+            const existingMap = new Map(vehicles.map(v => [v.plate, v]));
+            mappedVehicles.forEach(v => existingMap.set(v.plate, v));
+            onVehiclesChange(Array.from(existingMap.values()));
+          }
         }
       } catch (error) {
         alert("Erro ao ler arquivo Excel.");
