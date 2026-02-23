@@ -88,8 +88,8 @@ function AppContent() {
     localStorage.setItem('transport_app_assets', JSON.stringify(newAssets));
     try {
       await pushAssets(newAssets);
-    } catch (err) {
-      triggerToast('Aviso: Salvo apenas localmente (erro cloud).');
+    } catch (err: any) {
+      triggerToast(`Aviso: Salvo apenas localmente (Erro: ${err.message || 'Cloud Error'}).`);
     }
   }, [pushAssets]);
 
@@ -98,8 +98,8 @@ function AppContent() {
     localStorage.setItem('transport_app_vehicles', JSON.stringify(newVehicles));
     try {
       await pushVehicles(newVehicles);
-    } catch (err) {
-      triggerToast('Aviso: Salvo apenas localmente (erro cloud).');
+    } catch (err: any) {
+      triggerToast(`Aviso: Salvo apenas localmente (Erro: ${err.message || 'Cloud Error'}).`);
     }
   }, [pushVehicles]);
 
