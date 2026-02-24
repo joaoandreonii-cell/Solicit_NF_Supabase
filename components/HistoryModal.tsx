@@ -1,6 +1,6 @@
 import React from 'react';
 import { HistoryItem } from '../types';
-import { Trash2, RotateCcw, X, Calendar, MapPin, FileText } from 'lucide-react';
+import { Trash2, RotateCcw, X, Calendar, MapPin, FileText, Building2 } from 'lucide-react';
 
 interface HistoryModalProps {
   isOpen: boolean;
@@ -10,12 +10,12 @@ interface HistoryModalProps {
   onDelete: (id: string) => void;
 }
 
-export const HistoryModal: React.FC<HistoryModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  history, 
-  onLoad, 
-  onDelete 
+export const HistoryModal: React.FC<HistoryModalProps> = ({
+  isOpen,
+  onClose,
+  history,
+  onLoad,
+  onDelete
 }) => {
   if (!isOpen) return null;
 
@@ -32,11 +32,11 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
-        
+
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-slate-100">
           <h2 className="text-xl font-bold text-slate-800">Histórico de Solicitações</h2>
-          <button 
+          <button
             onClick={onClose}
             className="text-slate-400 hover:text-slate-600 transition-colors"
           >
@@ -66,13 +66,17 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
                       </span>
                     )}
                   </div>
-                  
+
                   <div className="mb-4">
                     <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-                       <MapPin size={16} className="text-blue-500"/>
-                       {item.formData.destinationCity || 'Destino não informado'}
+                      <Building2 size={16} className="text-blue-500" />
+                      {item.formData.workName || 'Obra não informada'}
                     </h3>
                     <div className="text-sm text-slate-600 mt-1 ml-6">
+                      <p className="flex items-center gap-1.5 mb-1 text-slate-500 italic">
+                        <MapPin size={12} />
+                        {item.formData.destinationCity || 'Destino não informado'}
+                      </p>
                       <p>Motorista: {item.formData.driverName || '-'}</p>
                       <p>Veículo: {item.formData.vehiclePlate || '-'}</p>
                       <p>Itens: {item.selectedAssets.length}</p>
