@@ -98,17 +98,23 @@ export const useTripForm = () => {
         }
 
         // Date and Time Validations
-        if (formData.exitDate && formData.exitTime) {
-            const now = new Date();
-            const exitDateTime = new Date(`${formData.exitDate}T${formData.exitTime}`);
+        const parseDateTime = (d: string, t: string) => {
+            if (!d || !t) return null;
+            const normalizedDate = d.includes('/') ? d.split('/').reverse().join('-') : d;
+            const dt = new Date(`${normalizedDate}T${t}`);
+            return isNaN(dt.getTime()) ? null : dt;
+        };
 
+        const exitDateTime = parseDateTime(formData.exitDate, formData.exitTime);
+        if (exitDateTime) {
+            const now = new Date();
             if (exitDateTime < now) {
                 newErrors.exitDate = 'A saída deve ser igual ou depois da data e horário atual';
             }
 
-            if (formData.returnDate && formData.returnTime) {
-                const returnDateTime = new Date(`${formData.returnDate}T${formData.returnTime}`);
-                if (returnDateTime <= exitDateTime) {
+            const returnDateTime = parseDateTime(formData.returnDate, formData.returnTime);
+            if (returnDateTime) {
+                if (returnDateTime.getTime() <= exitDateTime.getTime()) {
                     newErrors.returnDate = 'O retorno deve ser posterior à data e hora da saída';
                 }
             }
