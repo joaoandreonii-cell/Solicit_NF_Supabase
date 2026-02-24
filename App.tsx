@@ -9,6 +9,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { SearchableSelect } from './components/SearchableSelect';
 import { TripForm } from './components/TripForm';
 import { MessagePreview } from './components/MessagePreview';
+import { FavoritesModal } from './components/FavoritesModal';
 import {
   CheckCircle,
   RotateCcw
@@ -54,6 +55,7 @@ function AppContent() {
 
   // Modals/Panels State
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
 
@@ -257,6 +259,15 @@ function AppContent() {
         />
       )}
 
+      {isFavoritesOpen && (
+        <FavoritesModal
+          isOpen={isFavoritesOpen}
+          onClose={() => setIsFavoritesOpen(false)}
+          favorites={[]} // Empty for now
+          onLoad={loadHistoryItem}
+        />
+      )}
+
       {isAdminOpen && (
         <AdminPanel
           isOpen={isAdminOpen}
@@ -298,6 +309,7 @@ function AppContent() {
           updateAsset={updateAssetRow}
           removeAsset={removeAssetRow}
           setIsHistoryOpen={setIsHistoryOpen}
+          setIsFavoritesOpen={setIsFavoritesOpen}
           setIsAdminOpen={setIsAdminOpen}
           handlePreviewMode={handlePreviewMode}
           handleResetForm={handleResetForm}

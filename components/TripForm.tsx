@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Building2, Hash, MapPin, Truck, User, Calendar, Clock,
-    Package, Scale, ClipboardList, PlusCircle, History, Settings, RotateCcw
+    Package, Scale, ClipboardList, PlusCircle, History, Settings, RotateCcw, Star
 } from 'lucide-react';
 import { SearchableSelect } from './SearchableSelect';
 import { AssetRow } from './AssetRow';
@@ -21,6 +21,7 @@ interface TripFormProps {
     updateAsset: (id: string, field: keyof SelectedAsset, value: string | number) => void;
     removeAsset: (id: string) => void;
     setIsHistoryOpen: (open: boolean) => void;
+    setIsFavoritesOpen: (open: boolean) => void;
     setIsAdminOpen: (open: boolean) => void;
     handlePreviewMode: () => void;
     handleResetForm: () => void;
@@ -40,6 +41,7 @@ export const TripForm: React.FC<TripFormProps> = ({
     updateAsset,
     removeAsset,
     setIsHistoryOpen,
+    setIsFavoritesOpen,
     setIsAdminOpen,
     handlePreviewMode,
     handleResetForm
@@ -54,6 +56,13 @@ export const TripForm: React.FC<TripFormProps> = ({
                         <p className="text-blue-100 mt-1 opacity-90">Preencha os dados da viagem abaixo</p>
                     </div>
                     <div className="flex gap-2">
+                        <button
+                            onClick={() => setIsFavoritesOpen(true)}
+                            className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                            title="Ver Favoritos"
+                        >
+                            <Star size={20} />
+                        </button>
                         <button
                             onClick={() => setIsHistoryOpen(true)}
                             className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
