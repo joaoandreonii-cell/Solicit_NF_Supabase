@@ -83,6 +83,14 @@ export const useTripForm = () => {
             newErrors.exitTime = 'Horário de saída é obrigatório';
         }
 
+        // Return Forecast (Mandatory)
+        if (!formData.returnDate) {
+            newErrors.returnDate = 'Data de retorno é obrigatória';
+        }
+        if (!formData.returnTime) {
+            newErrors.returnTime = 'Horário de retorno é obrigatório';
+        }
+
         // Date and Time Validations
         if (formData.exitDate && formData.exitTime) {
             const now = new Date();
