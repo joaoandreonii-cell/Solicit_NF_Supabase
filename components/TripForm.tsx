@@ -378,7 +378,6 @@ export const TripForm: React.FC<TripFormProps> = ({
                 </div>
             </div>
 
-            {/* Form Action Buttons */}
             <div className="px-6 py-6 bg-slate-50 border-t border-slate-200 flex gap-4">
                 <button
                     onClick={handleResetForm}
@@ -389,7 +388,7 @@ export const TripForm: React.FC<TripFormProps> = ({
                 </button>
                 <button
                     onClick={handlePreviewMode}
-                    className="flex-[2] flex justify-center items-center px-6 py-4 border border-transparent text-base font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg transition-transform active:scale-[0.99]"
+                    className="flex-[4] flex justify-center items-center px-6 py-4 border border-transparent text-base font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg transition-transform active:scale-[0.99]"
                 >
                     <Eye className="h-5 w-5 mr-2" />
                     Continuar
