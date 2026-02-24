@@ -25,8 +25,8 @@ export interface TripFormData {
   destinationCity: string;
   driverName: string;
   vehiclePlate: string;
-  totalWeight: number;
-  volume: number;
+  totalWeight: number | '';
+  volume: number | '';
   hasOtherMaterials?: 'Sim' | 'Não';
   returnDate: string;
   returnTime: string;

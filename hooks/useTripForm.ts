@@ -9,8 +9,8 @@ const getInitialForm = (): TripFormData => ({
     vehiclePlate: '',
     exitDate: '',
     exitTime: '',
-    totalWeight: 0,
-    volume: 0,
+    totalWeight: '',
+    volume: '',
     returnDate: '',
     returnTime: '',
     observations: '',
@@ -24,8 +24,14 @@ export const useTripForm = () => {
     const [formKey, setFormKey] = useState(0);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        const { name, value, type } = e.target;
+        let finalValue: string | number = value;
+
+        if (type === 'number') {
+            finalValue = value === '' ? '' : parseFloat(value);
+        }
+
+        setFormData(prev => ({ ...prev, [name]: finalValue }));
     };
 
     const addAssetRow = () => {
@@ -108,8 +114,8 @@ export const useTripForm = () => {
             }
         }
 
-        if (formData.totalWeight < 0) newErrors.totalWeight = 'Peso não pode ser negativo';
-        if (formData.volume < 0) newErrors.volume = 'Volume não pode ser negativo';
+        if (formData.totalWeight !== '' && formData.totalWeight < 0) newErrors.totalWeight = 'Peso não pode ser negativo';
+        if (formData.volume !== '' && formData.volume < 0) newErrors.volume = 'Volume não pode ser negativo';
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;

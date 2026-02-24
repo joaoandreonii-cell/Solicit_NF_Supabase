@@ -26,8 +26,8 @@ const getInitialForm = (): TripFormData => ({
   vehiclePlate: '',
   exitDate: '',
   exitTime: '',
-  totalWeight: 0,
-  volume: 0,
+  totalWeight: '',
+  volume: '',
   returnDate: '',
   returnTime: '',
   observations: ''
@@ -204,8 +204,8 @@ function AppContent() {
     message += `Cidade destino: ${formData.destinationCity}\n`;
     message += `Motorista: ${formData.driverName}\n`;
     message += `Veículo: ${vehicleDisplay}\n`;
-    message += `Peso: ${formData.totalWeight}kg\n`;
-    message += `Volume: ${formData.volume} vol\n`;
+    message += `Peso: ${formData.totalWeight !== '' ? `${formData.totalWeight}kg` : '-'}\n`;
+    message += `Volume: ${formData.volume !== '' ? `${formData.volume} vol` : '-'}\n`;
     if (formData.hasOtherMaterials) message += `Se Haverá Materiais: ${formData.hasOtherMaterials}\n`;
     message += `\nImobilizado:\n${assetListString || '(Nenhum item selecionado)'}\n`;
     message += `\nPREVISÃO DE RETORNO\n`;
