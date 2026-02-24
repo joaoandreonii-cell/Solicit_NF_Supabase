@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useTripForm } from './hooks/useTripForm';
 import { useHistory } from './hooks/useHistory';
+import { useFavorites } from './hooks/useFavorites';
 import { useSync } from './hooks/useSync';
 import { Analytics } from '@vercel/analytics/react';
 
@@ -44,6 +45,7 @@ function AppContent() {
   } = useTripForm();
 
   const { history, saveToHistory, deleteHistoryItem } = useHistory();
+  const { favorites, toggleFavorite, isFavorite, removeFromFavorites } = useFavorites();
   const { isSyncing, pullData, pushAssets, pushVehicles, deleteFromRemote } = useSync();
 
   const [showToast, setShowToast] = useState<{ show: boolean, message: string }>({ show: false, message: '' });
@@ -256,6 +258,8 @@ function AppContent() {
           history={history}
           onLoad={loadHistoryItem}
           onDelete={deleteHistoryItem}
+          onToggleFavorite={toggleFavorite}
+          isFavorite={isFavorite}
         />
       )}
 
@@ -263,8 +267,9 @@ function AppContent() {
         <FavoritesModal
           isOpen={isFavoritesOpen}
           onClose={() => setIsFavoritesOpen(false)}
-          favorites={[]} // Empty for now
+          favorites={favorites}
           onLoad={loadHistoryItem}
+          onRemove={removeFromFavorites}
         />
       )}
 

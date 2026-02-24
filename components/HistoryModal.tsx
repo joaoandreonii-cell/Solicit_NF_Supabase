@@ -1,6 +1,6 @@
 import React from 'react';
 import { HistoryItem } from '../types';
-import { Trash2, RotateCcw, X, Calendar, MapPin, FileText, Building2 } from 'lucide-react';
+import { Trash2, RotateCcw, X, Calendar, MapPin, FileText, Building2, Star } from 'lucide-react';
 
 interface HistoryModalProps {
   isOpen: boolean;
@@ -8,6 +8,8 @@ interface HistoryModalProps {
   history: HistoryItem[];
   onLoad: (item: HistoryItem) => void;
   onDelete: (id: string) => void;
+  onToggleFavorite: (item: HistoryItem) => void;
+  isFavorite: (id: string) => boolean;
 }
 
 export const HistoryModal: React.FC<HistoryModalProps> = ({
@@ -15,7 +17,9 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
   onClose,
   history,
   onLoad,
-  onDelete
+  onDelete,
+  onToggleFavorite,
+  isFavorite
 }) => {
   if (!isOpen) return null;
 
@@ -59,12 +63,24 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
                       <Calendar size={14} />
                       <span>{formatDate(item.createdAt)}</span>
                     </div>
-                    {item.isDraft && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
-                        <FileText size={10} className="mr-1" />
-                        Rascunho
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => onToggleFavorite(item)}
+                        className={`p-1.5 rounded-full transition-colors ${isFavorite(item.id)
+                          ? 'text-amber-500 bg-amber-50'
+                          : 'text-slate-300 hover:text-amber-400 hover:bg-slate-100'
+                          }`}
+                        title={isFavorite(item.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                      >
+                        <Star size={18} fill={isFavorite(item.id) ? "currentColor" : "none"} />
+                      </button>
+                      {item.isDraft && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                          <FileText size={10} className="mr-1" />
+                          Rascunho
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="mb-4">

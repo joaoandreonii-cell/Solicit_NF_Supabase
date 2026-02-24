@@ -1,19 +1,21 @@
 import React from 'react';
 import { HistoryItem } from '../types';
-import { Star, X, MapPin, Building2 } from 'lucide-react';
+import { Star, X, MapPin, Building2, Trash2 } from 'lucide-react';
 
 interface FavoritesModalProps {
     isOpen: boolean;
     onClose: () => void;
     favorites: HistoryItem[];
     onLoad: (item: HistoryItem) => void;
+    onRemove: (id: string) => void;
 }
 
 export const FavoritesModal: React.FC<FavoritesModalProps> = ({
     isOpen,
     onClose,
     favorites,
-    onLoad
+    onLoad,
+    onRemove
 }) => {
     if (!isOpen) return null;
 
@@ -64,6 +66,13 @@ export const FavoritesModal: React.FC<FavoritesModalProps> = ({
                                     </div>
 
                                     <div className="flex justify-end gap-3 border-t border-slate-100 pt-3">
+                                        <button
+                                            onClick={() => onRemove(item.id)}
+                                            className="flex items-center text-sm text-red-600 hover:text-red-800 px-3 py-1.5 rounded-md hover:bg-red-50 transition-colors"
+                                        >
+                                            <Trash2 size={16} className="mr-1.5" />
+                                            Remover
+                                        </button>
                                         <button
                                             onClick={() => {
                                                 onLoad(item);
