@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Building2, Hash, MapPin, Truck, User, Calendar, Clock,
-    Package, Scale, ClipboardList, PlusCircle, History, Settings
+    Package, Scale, ClipboardList, PlusCircle, History, Settings, RotateCcw
 } from 'lucide-react';
 import { SearchableSelect } from './SearchableSelect';
 import { AssetRow } from './AssetRow';
@@ -23,6 +23,7 @@ interface TripFormProps {
     setIsHistoryOpen: (open: boolean) => void;
     setIsAdminOpen: (open: boolean) => void;
     handlePreviewMode: () => void;
+    handleResetForm: () => void;
 }
 
 export const TripForm: React.FC<TripFormProps> = ({
@@ -40,7 +41,8 @@ export const TripForm: React.FC<TripFormProps> = ({
     removeAsset,
     setIsHistoryOpen,
     setIsAdminOpen,
-    handlePreviewMode
+    handlePreviewMode,
+    handleResetForm
 }) => {
     return (
         <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
@@ -376,14 +378,21 @@ export const TripForm: React.FC<TripFormProps> = ({
                 </div>
             </div>
 
-            {/* Form Action Button */}
-            <div className="px-6 py-6 bg-slate-50 border-t border-slate-200">
+            {/* Form Action Buttons */}
+            <div className="px-6 py-6 bg-slate-50 border-t border-slate-200 flex gap-4">
+                <button
+                    onClick={handleResetForm}
+                    className="flex-1 flex justify-center items-center px-6 py-4 border border-slate-300 text-base font-medium rounded-xl text-slate-500 bg-white hover:bg-slate-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm transition-all active:scale-[0.99]"
+                >
+                    <RotateCcw className="h-5 w-5 mr-2" />
+                    Limpar
+                </button>
                 <button
                     onClick={handlePreviewMode}
-                    className="w-full flex justify-center items-center px-6 py-4 border border-transparent text-base font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg transition-transform active:scale-[0.99]"
+                    className="flex-[2] flex justify-center items-center px-6 py-4 border border-transparent text-base font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg transition-transform active:scale-[0.99]"
                 >
                     <Eye className="h-5 w-5 mr-2" />
-                    Visualizar Mensagem
+                    Continuar
                 </button>
             </div>
         </div>

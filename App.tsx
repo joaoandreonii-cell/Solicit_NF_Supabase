@@ -300,6 +300,7 @@ function AppContent() {
           setIsHistoryOpen={setIsHistoryOpen}
           setIsAdminOpen={setIsAdminOpen}
           handlePreviewMode={handlePreviewMode}
+          handleResetForm={handleResetForm}
         />
       ) : (
         <MessagePreview
@@ -313,16 +314,6 @@ function AppContent() {
           onSaveToHistory={handleSaveToHistory}
         />
       )}
-
-      <div className="max-w-4xl mx-auto mt-8 flex flex-col items-center gap-4">
-        <button
-          onClick={handleResetForm}
-          className="text-slate-500 hover:text-red-600 text-sm font-medium transition-colors flex items-center gap-1"
-        >
-          <RotateCcw size={14} />
-          Limpar todos os campos
-        </button>
-      </div>
     </div>
   );
 }
