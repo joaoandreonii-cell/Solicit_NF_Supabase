@@ -56,7 +56,9 @@ function AppContent() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
+    return sessionStorage.getItem('transport_app_admin_auth') === 'true';
+  });
 
   // Load Initial Assets/Vehicles with hybrid sync
   useEffect(() => {

@@ -68,12 +68,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // ---------------------------------------------------------------------------
   // AUTHENTICATION LOGIC
   // ---------------------------------------------------------------------------
-  // No local login logic needed as we use Supabase Auth
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, we would check for an 'admin' role in the user metadata or a specific table.
-    // For now, we will trust the isAuthenticated prop from App.tsx which is set via AuthContext.
-    onLogin();
+    setLoginError('');
+
+    // Default admin password
+    const ADMIN_PASSWORD = 'admin123';
+
+    if (password === ADMIN_PASSWORD) {
+      sessionStorage.setItem('transport_app_admin_auth', 'true');
+      onLogin();
+    } else {
+      setLoginError('Senha incorreta.');
+    }
   };
 
   // ---------------------------------------------------------------------------
@@ -369,25 +376,34 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg mb-6 flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
             <p className="text-sm text-amber-800">
-              O acesso ao Painel Administrativo requer privilégios elevados.
-              Clique no botão abaixo para confirmar seu acesso como administrador.
+              O acesso ao Painel Administrativo requer uma senha de segurança.
             </p>
           </div>
-          <div className="flex gap-3">
-            <button type="button" onClick={onClose} className="flex-1 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">Cancelar</button>
-            <button
-              onClick={() => {
-                if (user?.email_verified === false) {
-                  alert("Por favor, verifique seu email antes de acessar o painel.");
-                  return;
-                }
-                onLogin();
-              }}
-              className="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-            >
-              Acessar Painel
-            </button>
-          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Senha de administrador</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoFocus
+                className="w-full bg-white text-slate-900 border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="********"
+              />
+              {loginError && <p className="text-xs text-red-500 mt-1">{loginError}</p>}
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button type="button" onClick={onClose} className="flex-1 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">Cancelar</button>
+              <button
+                type="submit"
+                className="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              >
+                Acessar Painel
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     );
