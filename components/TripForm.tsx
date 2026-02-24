@@ -261,6 +261,7 @@ export const TripForm: React.FC<TripFormProps> = ({
                                 onUpdate={updateAsset}
                                 onRemove={removeAsset}
                                 onEnter={index === selectedAssets.length - 1 ? addAssetRow : undefined}
+                                autoFocus={index === selectedAssets.length - 1}
                             />
                         ))}
                         {selectedAssets.length === 0 && (

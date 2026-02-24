@@ -18,6 +18,7 @@ interface SearchableSelectProps {
   inputClassName?: string;
   error?: boolean;
   onEnter?: () => void;
+  autoFocus?: boolean;
 }
 
 // Helper function to normalize text (remove accents and convert to lowercase)
@@ -38,6 +39,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   className = "",
   inputClassName = "",
   error,
+  autoFocus,
   onEnter
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -57,6 +59,13 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
       setSearchTerm('');
     }
   }, [selectedOption]);
+
+  // Handle autoFocus
+  useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [autoFocus]);
 
   // Handle clicking outside to close
   useEffect(() => {
@@ -94,7 +103,15 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen) {
-      if (e.key === 'ArrowDown' || e.key === 'Enter') setIsOpen(true);
+      if (e.key === 'ArrowDown') {
+        setIsOpen(true);
+      } else if (e.key === 'Enter') {
+        if (value && onEnter) {
+          onEnter();
+        } else {
+          setIsOpen(true);
+        }
+      }
       return;
     }
 
