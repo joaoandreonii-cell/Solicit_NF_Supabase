@@ -98,7 +98,7 @@ export const TripForm: React.FC<TripFormProps> = ({
                                 value={formData.workName}
                                 onChange={handleInputChange}
                                 className={`mt-1 block w-full bg-white text-slate-900 rounded-md shadow-sm focus:ring-blue-500 border p-2 ${errors.workName ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
-                                placeholder="Ex: Subestação Centro"
+                                placeholder="Ex: PCH Linha Rica"
                                 aria-invalid={!!errors.workName}
                                 aria-describedby={errors.workName ? "workName-error" : undefined}
                             />
@@ -115,7 +115,7 @@ export const TripForm: React.FC<TripFormProps> = ({
                                 value={formData.structureId}
                                 onChange={handleInputChange}
                                 className={`mt-1 block w-full bg-white text-slate-900 rounded-md shadow-sm focus:ring-blue-500 border p-2 ${errors.structureId ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
-                                placeholder="Ex: 12345"
+                                placeholder="Ex: 123456"
                                 aria-invalid={!!errors.structureId}
                                 aria-describedby={errors.structureId ? "structureId-error" : undefined}
                             />
@@ -131,7 +131,7 @@ export const TripForm: React.FC<TripFormProps> = ({
                                 value={formData.destinationCity}
                                 onChange={handleInputChange}
                                 className={`mt-1 block w-full bg-white text-slate-900 rounded-md shadow-sm focus:ring-blue-500 border p-2 ${errors.destinationCity ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
-                                placeholder="Ex: São Paulo"
+                                placeholder="Ex: Luzerna"
                                 aria-invalid={!!errors.destinationCity}
                                 aria-describedby={errors.destinationCity ? "destinationCity-error" : undefined}
                             />
