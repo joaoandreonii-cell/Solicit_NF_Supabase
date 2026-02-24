@@ -338,8 +338,11 @@ export const TripForm: React.FC<TripFormProps> = ({
                                 name="returnDate"
                                 value={formData.returnDate}
                                 onChange={handleInputChange}
-                                className="mt-1 block w-full bg-white text-slate-900 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                                className={`mt-1 block w-full bg-white text-slate-900 rounded-md shadow-sm focus:ring-blue-500 border p-2 ${errors.returnDate ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                                aria-invalid={!!errors.returnDate}
+                                aria-describedby={errors.returnDate ? "returnDate-error" : undefined}
                             />
+                            {errors.returnDate && <p className="mt-1 text-xs text-red-500" id="returnDate-error">{errors.returnDate}</p>}
                         </div>
                         <div>
                             <label htmlFor="returnTime" className="block text-sm font-medium text-slate-700">Horário de Retorno</label>
@@ -349,8 +352,11 @@ export const TripForm: React.FC<TripFormProps> = ({
                                 name="returnTime"
                                 value={formData.returnTime}
                                 onChange={handleInputChange}
-                                className="mt-1 block w-full bg-white text-slate-900 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                                className={`mt-1 block w-full bg-white text-slate-900 rounded-md shadow-sm focus:ring-blue-500 border p-2 ${errors.returnTime ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                                aria-invalid={!!errors.returnTime}
+                                aria-describedby={errors.returnTime ? "returnTime-error" : undefined}
                             />
+                            {errors.returnTime && <p className="mt-1 text-xs text-red-500" id="returnTime-error">{errors.returnTime}</p>}
                         </div>
                     </div>
                 </div>
