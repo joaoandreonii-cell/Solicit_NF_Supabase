@@ -122,7 +122,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
 
     if (activeTab === 'assets') {
-      const updated = assets.map(a => getAssetId(a) === oldId ? { fiscalCode: field1, patrimony: field2, description: field3 } : a);
+      const paddedPatrimony = field2.trim() ? field2.trim().padStart(4, '0') : '-';
+      const updated = assets.map(a => getAssetId(a) === oldId ? { fiscalCode: field1, patrimony: paddedPatrimony, description: field3 } : a);
       onAssetsChange(updated);
     } else {
       // Check for duplicate plate (excluding current)
@@ -210,7 +211,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
             const fCode = normalizedRow['codigofiscal'] || normalizedRow['fiscalcode'] || normalizedRow['codigo'] || normalizedRow['code'] || normalizedRow['imobilizado'] || normalizedRow['ativo'] || normalizedRow['id'];
             const patrimonyRaw = normalizedRow['patrimonio'] || normalizedRow['patrimony'];
-            const patrimony = patrimonyRaw ? String(patrimonyRaw).trim() : '-';
+            let patrimony = patrimonyRaw ? String(patrimonyRaw).trim() : '-';
+            if (patrimony !== '-' && patrimony !== '') {
+              patrimony = patrimony.padStart(4, '0');
+            }
             const desc = normalizedRow['descricao'] || normalizedRow['description'] || normalizedRow['desc'] || normalizedRow['item'] || normalizedRow['nome'] || normalizedRow['produto'];
 
             let itemToPush: Asset | null = null;
@@ -337,9 +341,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleAddManual = () => {
     if (activeTab === 'assets') {
       if (!newAsset.fiscalCode || !newAsset.description) return alert("Preencha Código Fiscal e Descrição");
-      const newId = getAssetId(newAsset);
+      const paddedPatrimony = newAsset.patrimony.trim() ? newAsset.patrimony.trim().padStart(4, '0') : '-';
+      const assetToAdd = { ...newAsset, patrimony: paddedPatrimony };
+      const newId = getAssetId(assetToAdd);
       if (assets.some(a => getAssetId(a) === newId)) return alert("Já existe este item com este código e patrimônio!");
-      onAssetsChange([...assets, newAsset]);
+      onAssetsChange([...assets, assetToAdd]);
       setNewAsset({ fiscalCode: '', patrimony: '', description: '' });
     } else {
       if (!newVehicle.plate || !newVehicle.model) return alert("Preencha Placa e Modelo");

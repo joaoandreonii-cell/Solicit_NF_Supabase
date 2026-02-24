@@ -53,15 +53,52 @@ export const useTripForm = () => {
     const validateForm = () => {
         const newErrors: Partial<Record<keyof TripFormData, string>> = {};
         if (!formData.workName.trim()) newErrors.workName = 'Nome da obra é obrigatório';
-        if (!formData.structureId.trim()) newErrors.structureId = 'Código da estrutura é obrigatório';
+
+        // Structure ID: exactly 6 digits
+        if (!formData.structureId.trim()) {
+            newErrors.structureId = 'Código da estrutura é obrigatório';
+        } else if (!/^\d{6}$/.test(formData.structureId)) {
+            newErrors.structureId = 'A estrutura deve ter exatamente 6 dígitos';
+        }
+
         if (!formData.destinationCity.trim()) newErrors.destinationCity = 'Cidade destino é obrigatória';
         if (!formData.driverName.trim()) newErrors.driverName = 'Nome do motorista é obrigatório';
-        if (!formData.vehiclePlate.trim()) newErrors.vehiclePlate = 'Selecione um veículo';
-        if (formData.vehiclePlate === 'OUTRO' && !formData.customVehiclePlate?.trim()) {
-            newErrors.customVehiclePlate = 'Placa é obrigatória para outro veículo';
+
+        // Vehicle Plate Validation (Old Brazilian format or Mercosul)
+        const plateRegex = /^[A-Z]{3}[- ]?\d[A-Z0-9]\d{2}$/i;
+        if (!formData.vehiclePlate.trim()) {
+            newErrors.vehiclePlate = 'Selecione um veículo';
+        } else if (formData.vehiclePlate === 'OUTRO') {
+            if (!formData.customVehiclePlate?.trim()) {
+                newErrors.customVehiclePlate = 'Placa é obrigatória para outro veículo';
+            } else if (!plateRegex.test(formData.customVehiclePlate)) {
+                newErrors.customVehiclePlate = 'A placa deve ser um padrão válido (ex: ABC-1234 ou ABC1C34)';
+            }
         }
-        if (!formData.exitDate) newErrors.exitDate = 'Data de saída é obrigatória';
-        if (!formData.exitTime) newErrors.exitTime = 'Horário de saída é obrigatório';
+
+        if (!formData.exitDate) {
+            newErrors.exitDate = 'Data de saída é obrigatória';
+        }
+        if (!formData.exitTime) {
+            newErrors.exitTime = 'Horário de saída é obrigatório';
+        }
+
+        // Date and Time Validations
+        if (formData.exitDate && formData.exitTime) {
+            const now = new Date();
+            const exitDateTime = new Date(`${formData.exitDate}T${formData.exitTime}`);
+
+            if (exitDateTime < now) {
+                newErrors.exitDate = 'A saída deve ser igual ou depois da data e horário atual';
+            }
+
+            if (formData.returnDate && formData.returnTime) {
+                const returnDateTime = new Date(`${formData.returnDate}T${formData.returnTime}`);
+                if (returnDateTime <= exitDateTime) {
+                    newErrors.returnDate = 'O retorno deve ser posterior à data e hora da saída';
+                }
+            }
+        }
 
         if (formData.totalWeight < 0) newErrors.totalWeight = 'Peso não pode ser negativo';
         if (formData.volume < 0) newErrors.volume = 'Volume não pode ser negativo';
