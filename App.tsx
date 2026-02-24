@@ -16,6 +16,7 @@ import {
 import { useTripForm } from './hooks/useTripForm';
 import { useHistory } from './hooks/useHistory';
 import { useSync } from './hooks/useSync';
+import { Analytics } from '@vercel/analytics/react';
 
 const getInitialForm = (): TripFormData => ({
   workName: '',
@@ -330,6 +331,7 @@ export default function App() {
   return (
     <AuthProvider>
       <AppContent />
+      <Analytics />
     </AuthProvider>
   );
 }
