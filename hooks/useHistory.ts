@@ -20,7 +20,10 @@ export const useHistory = () => {
     }, [history]);
 
     const saveToHistory = (newItem: HistoryItem) => {
-        setHistory(prev => [newItem, ...prev]);
+        setHistory(prev => {
+            const updated = [newItem, ...prev];
+            return updated.slice(0, 50); // Keep only the 50 most recent
+        });
     };
 
     const deleteHistoryItem = (id: string) => {
