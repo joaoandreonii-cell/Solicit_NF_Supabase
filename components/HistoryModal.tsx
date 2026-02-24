@@ -88,8 +88,8 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
                       <Building2 size={16} className="text-blue-500" />
                       {item.formData.workName || 'Obra não informada'}
                     </h3>
-                    <div className="text-sm text-slate-600 mt-1 ml-6">
-                      <p className="flex items-center gap-1.5 mb-1 text-slate-500 italic">
+                    <div className="text-sm text-slate-600 ml-6">
+                      <p className="flex items-center gap-1.5 mb-0.5 text-slate-500 italic">
                         <MapPin size={12} />
                         {item.formData.destinationCity || 'Destino não informado'}
                       </p>
