@@ -1,7 +1,7 @@
 Schema Inspection Report
 ========================
 
-Assets Columns: 
+Assets Columns: fiscal_code, patrimony, description, updated_at
 
 Upsert Test Results:
 Success on Upsert!

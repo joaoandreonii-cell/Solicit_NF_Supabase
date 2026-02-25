@@ -2,6 +2,7 @@ export interface Asset {
   fiscalCode: string;
   patrimony: string;
   description: string;
+  updatedAt?: string;
 }
 
 export interface Vehicle {
@@ -9,6 +10,7 @@ export interface Vehicle {
   model: string;
   unit: string;
   sector: string;
+  updatedAt?: string;
 }
 
 export interface SelectedAsset {

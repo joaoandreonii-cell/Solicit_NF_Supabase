@@ -5,28 +5,42 @@ import { Asset, Vehicle } from '../types';
 export const useSync = () => {
     const [isSyncing, setIsSyncing] = useState(false);
 
-    const pullData = useCallback(async () => {
+    const pullData = useCallback(async (lastSyncedAt?: string) => {
         setIsSyncing(true);
         try {
+            let assetsQuery = supabase.from('assets').select('*');
+            let vehiclesQuery = supabase.from('vehicles').select('*');
+
+            if (lastSyncedAt) {
+                assetsQuery = assetsQuery.gt('updated_at', lastSyncedAt);
+                vehiclesQuery = vehiclesQuery.gt('updated_at', lastSyncedAt);
+            }
+
             const [{ data: remoteAssets }, { data: remoteVehicles }] = await Promise.all([
-                supabase.from('assets').select('*'),
-                supabase.from('vehicles').select('*')
+                assetsQuery,
+                vehiclesQuery
             ]);
 
             const formattedAssets: Asset[] = (remoteAssets || []).map(a => ({
                 fiscalCode: a.fiscal_code,
                 patrimony: a.patrimony,
-                description: a.description
+                description: a.description,
+                updatedAt: a.updated_at // Added updatedAt to type as well (will update types.ts)
             }));
 
             const formattedVehicles: Vehicle[] = (remoteVehicles || []).map(v => ({
                 plate: v.plate,
                 model: v.model,
                 unit: v.unit,
-                sector: v.sector
+                sector: v.sector,
+                updatedAt: v.updated_at
             }));
 
-            return { assets: formattedAssets, vehicles: formattedVehicles };
+            return {
+                assets: formattedAssets,
+                vehicles: formattedVehicles,
+                timestamp: new Date().toISOString()
+            };
         } catch (error) {
             console.error('Error pulling data from Supabase:', error);
             throw error;
@@ -46,10 +60,8 @@ export const useSync = () => {
                 updated_at: new Date().toISOString()
             }));
 
-            // Upsert assets using composite key (supported if unique index exists)
-            const { error } = await supabase
-                .from('assets')
-                .upsert(formatted, { onConflict: 'fiscal_code, patrimony' });
+            // Upsert assets using RPC to handle conditional logic (updated_at check)
+            const { error } = await supabase.rpc('upsert_assets', { assets_json: formatted });
 
             if (error) throw error;
         } catch (error) {
@@ -72,10 +84,8 @@ export const useSync = () => {
                 updated_at: new Date().toISOString()
             }));
 
-            // Upsert vehicles
-            const { error } = await supabase
-                .from('vehicles')
-                .upsert(formatted, { onConflict: 'plate' });
+            // Upsert vehicles using RPC to handle conditional logic (updated_at check)
+            const { error } = await supabase.rpc('upsert_vehicles', { vehicles_json: formatted });
 
             if (error) throw error;
         } catch (error) {
