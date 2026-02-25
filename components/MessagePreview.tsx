@@ -25,44 +25,46 @@ export const MessagePreview: React.FC<MessagePreviewProps> = ({
     onSendWhatsApp,
     onSaveToHistory
 }) => {
-    const getAssetDescription = (fiscalCode: string) => {
-        const asset = assets.find(a => a.fiscalCode === fiscalCode);
-        if (!asset) return fiscalCode;
-        return `${asset.description}${asset.patrimony && asset.patrimony !== '-' ? ` [Patrimônio: ${asset.patrimony}]` : ''}`;
-    };
+    const getAssetDescription = (item: SelectedAsset) => {
+        const asset = assets.find(a => a.fiscalCode === item.assetFiscalCode.split('|')[0] && a.patrimony === item.assetFiscalCode.split('|')[1]);
+        const [fCode, patrimony] = item.assetFiscalCode.includes('|')
+            ? item.assetFiscalCode.split('|')
+            : [item.assetFiscalCode, '-'];
 
-    const getVehicleDetails = () => {
-        const vehicle = vehicles.find(v => v.plate === formData.vehiclePlate);
-        if (!vehicle) return '';
-        return `(${vehicle.model}${vehicle.unit !== '-' ? ` | ${vehicle.unit}` : ''}${vehicle.sector !== '-' ? ` | ${vehicle.sector}` : ''})`;
+        const description = asset ? asset.description : 'Descrição não encontrada';
+        return `[${item.quantity}] - [${patrimony}] - [${fCode}] - [${description}]`;
     };
 
     const generateMessage = () => {
-        let message = `*SOLICITAÇÃO DE NF PARA TRANSPORTE*\n\n`;
-        message += `*OBRA:* ${formData.workName}\n`;
-        message += `*ESTRUTURA:* ${formData.structureId}\n`;
-        message += `*DESTINO:* ${formData.destinationCity}\n`;
-        message += `*MOTORISTA:* ${formData.driverName}\n`;
+        let message = `Favor solicitar NF para a obra: ${formData.workName}, segue informações:\n`;
+        message += `Estrutura: ${formData.structureId}\n`;
+        message += `Data: ${formData.exitDate.split('-').reverse().join('/')}\n`;
+        message += `Horário: ${formData.exitTime}\n`;
+        message += `Cidade destino: ${formData.destinationCity}\n`;
+        message += `Motorista: ${formData.driverName}\n`;
+
         const vehicleDisplay = formData.vehiclePlate === 'OUTRO'
             ? formData.customVehiclePlate
-            : `${formData.vehiclePlate}${getVehicleDetails() ? ` - ${getVehicleDetails()}` : ''}`;
+            : formData.vehiclePlate;
+        message += `Veículo: ${vehicleDisplay}\n`;
 
-        message += `*PLACA:* ${vehicleDisplay}\n`;
-        message += `*DATA/HORA SAÍDA:* ${formData.exitDate.split('-').reverse().join('/')} às ${formData.exitTime}\n\n`;
+        message += `Peso: ${formData.totalWeight}kg\n`;
+        message += `Volume: ${formData.volume} vol\n`;
+        message += `Se Haverá Materiais: ${formData.hasOtherMaterials || 'Não'}\n\n`;
 
-        message += `*ITENS DO ATIVO:*\n`;
-        selectedAssets.forEach((item, index) => {
-            message += `${index + 1}. [${item.assetFiscalCode}] ${getAssetDescription(item.assetFiscalCode)} - Qtd: ${item.quantity}\n`;
+        message += `Imobilizado:\n`;
+        selectedAssets.forEach((item) => {
+            message += `${getAssetDescription(item)}\n`;
         });
 
-        message += `\n*CARGA:* ${formData.totalWeight}kg | ${formData.volume} vol\n`;
-
         if (formData.returnDate) {
-            message += `*PREVISÃO RETORNO:* ${formData.returnDate.split('-').reverse().join('/')} às ${formData.returnTime}\n`;
+            message += `\n*PREVISÃO DE RETORNO\n`;
+            message += `Data: ${formData.returnDate.split('-').reverse().join('/')}\n`;
+            message += `Horário: ${formData.returnTime}\n`;
         }
 
         if (formData.observations) {
-            message += `\n*OBSERVAÇÕES:* ${formData.observations}`;
+            message += `\nObservações: ${formData.observations}`;
         }
 
         return message;
