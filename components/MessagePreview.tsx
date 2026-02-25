@@ -32,7 +32,7 @@ export const MessagePreview: React.FC<MessagePreviewProps> = ({
             : [item.assetFiscalCode, '-'];
 
         const description = asset ? asset.description : 'Descrição não encontrada';
-        return `[${item.quantity}] - [${patrimony}] - [${fCode}] - [${description}]`;
+        return `${item.quantity} - ${patrimony} - ${fCode} - ${description}`;
     };
 
     const generateMessage = () => {
