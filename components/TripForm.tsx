@@ -388,21 +388,23 @@ export const TripForm: React.FC<TripFormProps> = ({
                 </div>
             </div>
 
-            <div className="px-6 py-6 bg-slate-50 border-t border-slate-200 flex gap-4">
-                <button
-                    onClick={handleResetForm}
-                    className="flex-1 flex justify-center items-center px-6 py-4 border border-slate-300 text-base font-medium rounded-xl text-slate-500 bg-white hover:bg-slate-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm transition-all active:scale-[0.99]"
-                >
-                    <RotateCcw className="h-5 w-5 mr-2" />
-                    Limpar
-                </button>
-                <button
-                    onClick={handlePreviewMode}
-                    className="flex-[4] flex justify-center items-center px-6 py-4 border border-transparent text-base font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg transition-transform active:scale-[0.99]"
-                >
-                    <Eye className="h-5 w-5 mr-2" />
-                    Continuar
-                </button>
+            <div className="px-8 py-6 bg-slate-50 border-t border-slate-200">
+                <div className="max-w-md mx-auto flex justify-center gap-4">
+                    <button
+                        onClick={handleResetForm}
+                        className="flex-none w-28 flex justify-center items-center px-4 py-3 border border-slate-300 text-sm font-medium rounded-xl text-slate-500 bg-white hover:bg-slate-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm transition-all active:scale-[0.99]"
+                    >
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Limpar
+                    </button>
+                    <button
+                        onClick={handlePreviewMode}
+                        className="flex-initial min-w-[160px] sm:min-w-[240px] flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg transition-transform active:scale-[0.99]"
+                    >
+                        <Eye className="h-5 w-5 mr-1" />
+                        Continuar
+                    </button>
+                </div>
             </div>
         </div>
     );
