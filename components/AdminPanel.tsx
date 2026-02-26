@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import * as XLSX from 'xlsx';
 import { Asset, Vehicle } from '../types';
 import { useSync } from '../hooks/useSync';
@@ -45,7 +44,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   isAuthenticated,
   onLogin
 }) => {
-  const { user } = useAuth();
   const { clearRemoteStorage } = useSync();
   // --- Auth State ---
   const [username, setUsername] = useState('');
