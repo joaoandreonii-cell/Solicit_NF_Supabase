@@ -5,42 +5,28 @@ import { Asset, Vehicle } from '../types';
 export const useSync = () => {
     const [isSyncing, setIsSyncing] = useState(false);
 
-    const pullData = useCallback(async (lastSyncedAt?: string) => {
+    const pullData = useCallback(async () => {
         setIsSyncing(true);
         try {
-            let assetsQuery = supabase.from('assets').select('*');
-            let vehiclesQuery = supabase.from('vehicles').select('*');
-
-            if (lastSyncedAt) {
-                assetsQuery = assetsQuery.gt('updated_at', lastSyncedAt);
-                vehiclesQuery = vehiclesQuery.gt('updated_at', lastSyncedAt);
-            }
-
             const [{ data: remoteAssets }, { data: remoteVehicles }] = await Promise.all([
-                assetsQuery,
-                vehiclesQuery
+                supabase.from('assets').select('*'),
+                supabase.from('vehicles').select('*')
             ]);
 
             const formattedAssets: Asset[] = (remoteAssets || []).map(a => ({
                 fiscalCode: a.fiscal_code,
                 patrimony: a.patrimony,
-                description: a.description,
-                updatedAt: a.updated_at // Added updatedAt to type as well (will update types.ts)
+                description: a.description
             }));
 
             const formattedVehicles: Vehicle[] = (remoteVehicles || []).map(v => ({
                 plate: v.plate,
                 model: v.model,
                 unit: v.unit,
-                sector: v.sector,
-                updatedAt: v.updated_at
+                sector: v.sector
             }));
 
-            return {
-                assets: formattedAssets,
-                vehicles: formattedVehicles,
-                timestamp: new Date().toISOString()
-            };
+            return { assets: formattedAssets, vehicles: formattedVehicles };
         } catch (error) {
             console.error('Error pulling data from Supabase:', error);
             throw error;

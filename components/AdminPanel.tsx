@@ -1,15 +1,24 @@
 import React, { useState, useRef } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import * as XLSX from 'xlsx';
 import { Asset, Vehicle } from '../types';
 import { useSync } from '../hooks/useSync';
 import {
+  Trash2,
+  Upload,
+  Download,
   Database,
-  X
+  LogIn,
+  Plus,
+  Save,
+  Search,
+  AlertTriangle,
+  X,
+  FileJson,
+  FileSpreadsheet,
+  Edit,
+  Check
 } from 'lucide-react';
-import { LoginOverlay } from './admin/LoginOverlay';
-import { AdminToolbar } from './admin/AdminToolbar';
-import { AdminDataTable } from './admin/AdminDataTable';
-import { AdminManualAdd } from './admin/AdminManualAdd';
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -22,11 +31,6 @@ interface AdminPanelProps {
   onClose: () => void;
   isAuthenticated: boolean;
   onLogin: () => void;
-  onResync: () => void;
-}
-
-interface XLSXRow {
-  [key: string]: string | number | boolean | null | undefined;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
@@ -39,10 +43,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onDeleteVehicle,
   onClose,
   isAuthenticated,
-  onLogin,
-  onResync
+  onLogin
 }) => {
+  const { user } = useAuth();
   const { clearRemoteStorage } = useSync();
+  // --- Auth State ---
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
 
   // --- Panel State ---
   const [activeTab, setActiveTab] = useState<'assets' | 'vehicles'>('assets');
@@ -55,9 +63,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   // --- Edit State ---
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState<{ field1: string; field2: string; field3?: string; field4?: string; field5?: string }>({
-    field1: '', field2: '', field3: '', field4: '', field5: ''
-  });
+  const [editValues, setEditValues] = useState<{ field1: string; field2: string; field3?: string; field4?: string; field5?: string }>({ field1: '', field2: '', field3: '', field4: '', field5: '' });
+
+  // ---------------------------------------------------------------------------
+  // AUTHENTICATION LOGIC
+  // ---------------------------------------------------------------------------
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+
+    // Default admin password
+    const ADMIN_PASSWORD = 'admin123';
+
+    if (password === ADMIN_PASSWORD) {
+      sessionStorage.setItem('transport_app_admin_auth', 'true');
+      onLogin();
+    } else {
+      setLoginError('Senha incorreta.');
+    }
+  };
 
   // ---------------------------------------------------------------------------
   // DATA HELPERS
@@ -65,7 +89,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const normalizeKey = (key: string) =>
     key.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "").toLowerCase().trim();
 
-  const getFilteredData = (): (Asset | Vehicle)[] => {
+  const getFilteredData = () => {
     const term = searchTerm.toLowerCase();
     if (activeTab === 'assets') {
       return assets.filter(a =>
@@ -81,25 +105,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
   };
 
-  const getAssetId = (a: Asset) => `${a.fiscalCode}|${a.patrimony}`;
-
   // ---------------------------------------------------------------------------
   // EDIT LOGIC
   // ---------------------------------------------------------------------------
-  const handleStartEdit = (item: Asset | Vehicle) => {
-    if (activeTab === 'assets') {
-      const a = item as Asset;
-      setEditingId(getAssetId(a));
-      setEditValues({ field1: a.fiscalCode, field2: a.patrimony, field3: a.description });
-    } else {
-      const v = item as Vehicle;
-      setEditingId(v.plate);
-      setEditValues({ field1: v.plate, field2: v.model, field3: v.unit, field4: v.sector });
-    }
+  const startEditing = (id: string, val1: string, val2: string, val3?: string, val4?: string, val5?: string) => {
+    setEditingId(id);
+    setEditValues({ field1: val1, field2: val2, field3: val3 || '', field4: val4 || '', field5: val5 || '' });
   };
 
-  const handleSaveEdit = (oldId: string) => {
-    const { field1, field2, field3, field4 } = editValues;
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditValues({ field1: '', field2: '', field3: '', field4: '', field5: '' });
+  };
+
+  const getAssetId = (a: Asset) => `${a.fiscalCode}|${a.patrimony}`;
+
+  const saveEdit = (oldId: string) => {
+    const { field1, field2, field3, field4, field5 } = editValues;
 
     if (!field1.trim() || !field2.trim()) {
       alert("Os campos obrigatórios não podem estar vazios.");
@@ -108,14 +130,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
     if (activeTab === 'assets') {
       const paddedPatrimony = field2.trim() ? field2.trim().padStart(4, '0') : '-';
-      const updated = assets.map(a => getAssetId(a) === oldId ? { fiscalCode: field1, patrimony: paddedPatrimony, description: field3, updatedAt: new Date().toISOString() } : a);
+      const updated = assets.map(a => getAssetId(a) === oldId ? { fiscalCode: field1, patrimony: paddedPatrimony, description: field3 } : a);
       onAssetsChange(updated);
     } else {
+      // Check for duplicate plate (excluding current)
       if (field1 !== oldId && vehicles.some(v => v.plate === field1)) {
         alert("Já existe um veículo com esta placa!");
         return;
       }
-      const updated = vehicles.map(v => v.plate === oldId ? { plate: field1, model: field2, unit: field3 || '', sector: field4 || '', updatedAt: new Date().toISOString() } : v);
+      const updated = vehicles.map(v => v.plate === oldId ? { plate: field1, model: field2, unit: field3 || '', sector: field4 || '' } : v);
       onVehiclesChange(updated);
     }
 
@@ -123,12 +146,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   };
 
   // ---------------------------------------------------------------------------
-  // ACTIONS
+  // ACTIONS: IMPORT / EXPORT / DELETE / ADD
   // ---------------------------------------------------------------------------
+
   const handleExport = () => {
     const dataToExport = activeTab === 'assets' ? assets : vehicles;
-    if (dataToExport.length === 0) return alert("Não há dados para exportar.");
-
+    if (dataToExport.length === 0) {
+      alert("Não há dados para exportar.");
+      return;
+    }
     const formattedData = activeTab === 'assets'
       ? (dataToExport as Asset[]).map(a => ({ "Código Fiscal": a.fiscalCode, "Patrimônio": a.patrimony, "Descrição": a.description }))
       : (dataToExport as Vehicle[]).map(v => ({ "Placa": v.plate, "Modelo": v.model, "Unidade": v.unit, "Setor": v.sector }));
@@ -139,6 +165,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     XLSX.writeFile(wb, `${activeTab === 'assets' ? 'imobilizados' : 'veiculos'}_backup_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -147,71 +177,248 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       try {
         const data = evt.target?.result;
         const workbook = XLSX.read(data, { type: 'array' });
-        if (!workbook.SheetNames.length) throw new Error("O arquivo Excel parece estar vazio.");
 
-        let jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]) as XLSXRow[];
+        if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+          throw new Error("O arquivo Excel parece estar vazio (sem abas).");
+        }
+
+        let worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        let jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+
+        // If first sheet is empty or has no recognizable data, search others
+        if (jsonData.length === 0 && workbook.SheetNames.length > 1) {
+          for (let i = 1; i < workbook.SheetNames.length; i++) {
+            const wsName = workbook.SheetNames[i];
+            const ws = workbook.Sheets[wsName];
+            const data = XLSX.utils.sheet_to_json(ws) as any[];
+            if (data.length > 0) {
+              worksheet = ws;
+              jsonData = data;
+              break;
+            }
+          }
+        }
+
+        if (!Array.isArray(jsonData) || jsonData.length === 0) {
+          alert("Não encontramos dados em nenhuma aba da planilha. Verifique se o arquivo contém informações.");
+          return;
+        }
 
         if (activeTab === 'assets') {
-          const mapped: Asset[] = jsonData.map(row => {
-            const normalized: Record<string, any> = {};
-            Object.keys(row).forEach(k => normalized[normalizeKey(k)] = row[k]);
+          const mappedAssets: Asset[] = [];
+          let skippedMissingData = 0;
+          let skippedDuplicatesInFile = 0;
+          const fileKeys = new Set<string>();
 
-            const fCode = normalized['codigofiscal'] || normalized['fiscalcode'] || normalized['codigo'] || normalized['code'];
-            const patrimonyRaw = normalized['patrimonio'] || normalized['patrimony'];
-            let patrimony = patrimonyRaw ? String(patrimonyRaw).trim().padStart(4, '0') : '-';
-            const desc = normalized['descricao'] || normalized['description'] || normalized['desc'] || normalized['item'];
+          jsonData.forEach((row: any) => {
+            const normalizedRow: Record<string, any> = {};
+            Object.keys(row).forEach(k => {
+              normalizedRow[normalizeKey(k)] = row[k];
+            });
 
-            return (fCode && desc) ? { fiscalCode: String(fCode).trim(), patrimony, description: String(desc).trim(), updatedAt: new Date().toISOString() } : null;
-          }).filter(item => item !== null) as Asset[];
+            const fCode = normalizedRow['codigofiscal'] || normalizedRow['fiscalcode'] || normalizedRow['codigo'] || normalizedRow['code'] || normalizedRow['imobilizado'] || normalizedRow['ativo'] || normalizedRow['id'];
+            const patrimonyRaw = normalizedRow['patrimonio'] || normalizedRow['patrimony'];
+            let patrimony = patrimonyRaw ? String(patrimonyRaw).trim() : '-';
+            if (patrimony !== '-' && patrimony !== '') {
+              patrimony = patrimony.padStart(4, '0');
+            }
+            const desc = normalizedRow['descricao'] || normalizedRow['description'] || normalizedRow['desc'] || normalizedRow['item'] || normalizedRow['nome'] || normalizedRow['produto'];
 
-          if (confirm(`Importar ${mapped.length} imobilizados?`)) {
-            const existingMap = new Map(assets.map(a => [getAssetId(a), a]));
-            mapped.forEach(a => existingMap.set(getAssetId(a), a));
+            let itemToPush: Asset | null = null;
+
+            if (fCode && desc) {
+              itemToPush = {
+                fiscalCode: String(fCode).trim(),
+                patrimony: patrimony,
+                description: String(desc).trim()
+              };
+            } else if (!fCode && desc && patrimony !== '-' && patrimony !== '') {
+              itemToPush = {
+                fiscalCode: patrimony,
+                patrimony: patrimony,
+                description: String(desc).trim()
+              };
+            }
+
+            if (itemToPush) {
+              const key = `${itemToPush.fiscalCode}|${itemToPush.patrimony}`;
+              if (fileKeys.has(key)) {
+                skippedDuplicatesInFile++;
+              } else {
+                fileKeys.add(key);
+                mappedAssets.push(itemToPush);
+              }
+            } else {
+              // Only count as skipped if it's not a completely empty row (XLSX sometimes adds empty rows at the end)
+              if (Object.values(row).some(v => v !== null && v !== '')) {
+                skippedMissingData++;
+              }
+            }
+          });
+
+          if (mappedAssets.length === 0) {
+            alert(`Encontramos ${jsonData.length} linhas, mas nenhuma tinha as colunas esperadas (ex: Código Fiscal e Descrição). Verifique os títulos das colunas.`);
+            return;
+          }
+
+          let confirmMsg = `Importar ${mappedAssets.length} imobilizados? (Dados existentes serão preservados e atualizados)`;
+          if (skippedMissingData > 0 || skippedDuplicatesInFile > 0) {
+            confirmMsg += `\n\nInfo sobre a planilha:`;
+            if (skippedMissingData > 0) confirmMsg += `\n- ${skippedMissingData} linhas ignoradas por falta de Código/Descrição.`;
+            if (skippedDuplicatesInFile > 0) confirmMsg += `\n- ${skippedDuplicatesInFile} linhas ignoradas por serem duplicadas dentro do próprio arquivo.`;
+          }
+
+          if (confirm(confirmMsg)) {
+            // Merge logic: use composite key (fiscalCode + patrimony) to allow same-code items
+            const existingMap = new Map();
+            assets.forEach(a => existingMap.set(getAssetId(a), a));
+            mappedAssets.forEach(a => existingMap.set(getAssetId(a), a));
             onAssetsChange(Array.from(existingMap.values()));
+            alert(`Importação concluída com sucesso! Total de itens no banco: ${existingMap.size}`);
           }
         } else {
-          const mapped: Vehicle[] = jsonData.map(row => {
-            const normalized: Record<string, any> = {};
-            Object.keys(row).forEach(k => normalized[normalizeKey(k)] = row[k]);
-            const plate = normalized['placa'] || normalized['plate'];
-            const model = normalized['modelo'] || normalized['model'];
-            return (plate && model) ? { plate: String(plate).trim(), model: String(model).trim(), unit: String(normalized['unidade'] || '-'), sector: String(normalized['setor'] || '-'), updatedAt: new Date().toISOString() } : null;
-          }).filter(item => item !== null) as Vehicle[];
+          const mappedVehicles: Vehicle[] = [];
+          let skippedMissingData = 0;
+          let skippedDuplicatesInFile = 0;
+          const fileKeys = new Set<string>(); // To track duplicates within the file
 
-          if (confirm(`Importar ${mapped.length} veículos?`)) {
+          jsonData.forEach((row: any) => {
+            const normalizedRow: Record<string, any> = {};
+            Object.keys(row).forEach(k => normalizedRow[normalizeKey(k)] = row[k]);
+            const plate = normalizedRow['placa'] || normalizedRow['plate'] || normalizedRow['veiculo'];
+            const model = normalizedRow['modelo'] || normalizedRow['model'] || normalizedRow['descricao'];
+            const unit = normalizedRow['unidade'] || normalizedRow['unit'] || '-';
+            const sector = normalizedRow['setor'] || normalizedRow['sector'] || '-';
+
+            if (plate && model) {
+              mappedVehicles.push({
+                plate: String(plate).trim(),
+                model: String(model).trim(),
+                unit: String(unit).trim(),
+                sector: String(sector).trim()
+              });
+            }
+          });
+
+          if (mappedVehicles.length === 0) {
+            alert(`Encontramos ${jsonData.length} linhas, mas nenhuma tinha as colunas esperadas (ex: Placa e Modelo). Verifique os títulos das colunas.`);
+            return;
+          }
+
+          if (confirm(`Importar ${mappedVehicles.length} veículos? (Dados existentes serão preservados e atualizados)`)) {
             const existingMap = new Map(vehicles.map(v => [v.plate, v]));
-            mapped.forEach(v => existingMap.set(v.plate, v));
+            mappedVehicles.forEach(v => existingMap.set(v.plate, v));
             onVehiclesChange(Array.from(existingMap.values()));
+            alert("Importação de veículos concluída com sucesso!");
           }
         }
       } catch (error: any) {
-        alert(`Erro ao processar arquivo: ${error.message}`);
+        console.error("XLSX Import Error:", error);
+        alert(`Erro ao processar arquivo: ${error.message || 'Erro desconhecido'}`);
       }
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
     reader.readAsArrayBuffer(file);
   };
 
+  const handleDeleteAll = () => {
+    const label = activeTab === 'assets' ? 'imobilizados' : 'veículos';
+    if (confirm(`PERIGO: Isso apagará TODOS os ${label} do banco de dados.`)) {
+      if (activeTab === 'assets') {
+        onAssetsChange([]);
+        clearRemoteStorage('assets');
+      } else {
+        onVehiclesChange([]);
+        clearRemoteStorage('vehicles');
+      }
+    }
+  };
+
+  const handleDeleteItem = (id: string) => {
+    if (!confirm("Excluir este item?")) return;
+    if (activeTab === 'assets') {
+      if (onDeleteAsset) onDeleteAsset(id);
+      else onAssetsChange(assets.filter(a => getAssetId(a) !== id));
+    } else {
+      if (onDeleteVehicle) onDeleteVehicle(id);
+      else onVehiclesChange(vehicles.filter(v => v.plate !== id));
+    }
+  };
+
   const handleAddManual = () => {
     if (activeTab === 'assets') {
-      if (!newAsset.fiscalCode || !newAsset.description) return alert("Preencha campos obrigatórios");
-      const assetToAdd = { ...newAsset, patrimony: newAsset.patrimony.trim().padStart(4, '0'), updatedAt: new Date().toISOString() };
-      if (assets.some(a => getAssetId(a) === getAssetId(assetToAdd))) return alert("Já existe!");
+      if (!newAsset.fiscalCode || !newAsset.description) return alert("Preencha Código Fiscal e Descrição");
+      const paddedPatrimony = newAsset.patrimony.trim() ? newAsset.patrimony.trim().padStart(4, '0') : '-';
+      const assetToAdd = { ...newAsset, patrimony: paddedPatrimony };
+      const newId = getAssetId(assetToAdd);
+      if (assets.some(a => getAssetId(a) === newId)) return alert("Já existe este item com este código e patrimônio!");
       onAssetsChange([...assets, assetToAdd]);
       setNewAsset({ fiscalCode: '', patrimony: '', description: '' });
     } else {
-      if (!newVehicle.plate || !newVehicle.model) return alert("Preencha campos obrigatórios");
-      onVehiclesChange([...vehicles, { ...newVehicle, updatedAt: new Date().toISOString() }]);
+      if (!newVehicle.plate || !newVehicle.model) return alert("Preencha Placa e Modelo");
+      if (vehicles.some(v => v.plate === newVehicle.plate)) return alert("Já existe esta placa!");
+      onVehiclesChange([...vehicles, newVehicle]);
       setNewVehicle({ plate: '', model: '', unit: '', sector: '' });
     }
   };
 
-  if (!isAuthenticated) return <LoginOverlay onLogin={onLogin} onClose={onClose} />;
+  if (!isAuthenticated) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-70 px-4 backdrop-blur-sm">
+        <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md border border-slate-200">
+          <div className="flex justify-center mb-6">
+            <div className="bg-blue-100 p-4 rounded-full shadow-inner">
+              <LogIn className="h-8 w-8 text-blue-600" />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-center text-slate-800 mb-2">Acesso Administrativo</h2>
+          <p className="text-center text-slate-500 mb-6 text-sm">Gerencie o banco de dados</p>
+          <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg mb-6 flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+            <p className="text-sm text-amber-800">
+              O acesso ao Painel Administrativo requer uma senha de segurança.
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Senha de administrador</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoFocus
+                className="w-full bg-white text-slate-900 border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="********"
+              />
+              {loginError && <p className="text-xs text-red-500 mt-1">{loginError}</p>}
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button type="button" onClick={onClose} className="flex-1 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">Cancelar</button>
+              <button
+                type="submit"
+                className="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              >
+                Acessar Painel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  const filteredList = getFilteredData();
+
+  const inputStyle = "bg-white text-slate-900 border border-slate-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 placeholder-slate-400 outline-none transition-all";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-75 p-4 backdrop-blur-sm">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden">
-        <div className="flex justify-between items-center p-5 border-b border-slate-200">
+
+        {/* HEADER */}
+        <div className="flex justify-between items-center p-5 border-b border-slate-200 bg-white">
           <div className="flex items-center gap-3">
             <div className="bg-blue-600 p-2 rounded-lg text-white shadow-md"><Database className="h-6 w-6" /></div>
             <div>
@@ -222,52 +429,130 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all"><X size={24} /></button>
         </div>
 
+        {/* TABS */}
         <div className="flex border-b border-slate-200 bg-slate-50">
-          <button className={`flex-1 py-3 text-sm font-medium transition-all border-b-2 ${activeTab === 'assets' ? 'border-blue-600 text-blue-700 bg-white' : 'border-transparent text-slate-500 hover:bg-slate-100'}`} onClick={() => { setActiveTab('assets'); setSearchTerm(''); setEditingId(null); }}>Imobilizados <span className="ml-2 bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full text-xs">{assets.length}</span></button>
-          <button className={`flex-1 py-3 text-sm font-medium transition-all border-b-2 ${activeTab === 'vehicles' ? 'border-blue-600 text-blue-700 bg-white' : 'border-transparent text-slate-500 hover:bg-slate-100'}`} onClick={() => { setActiveTab('vehicles'); setSearchTerm(''); setEditingId(null); }}>Veículos <span className="ml-2 bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full text-xs">{vehicles.length}</span></button>
+          <button className={`flex-1 py-3 text-sm font-medium transition-all border-b-2 ${activeTab === 'assets' ? 'border-blue-600 text-blue-700 bg-white' : 'border-transparent text-slate-500 hover:bg-slate-100'}`} onClick={() => { setActiveTab('assets'); setSearchTerm(''); cancelEditing(); }}>Imobilizados <span className="ml-2 bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full text-xs">{assets.length}</span></button>
+          <button className={`flex-1 py-3 text-sm font-medium transition-all border-b-2 ${activeTab === 'vehicles' ? 'border-blue-600 text-blue-700 bg-white' : 'border-transparent text-slate-500 hover:bg-slate-100'}`} onClick={() => { setActiveTab('vehicles'); setSearchTerm(''); cancelEditing(); }}>Veículos <span className="ml-2 bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full text-xs">{vehicles.length}</span></button>
         </div>
 
-        <AdminToolbar
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          activeTab={activeTab}
-          onImportClick={() => fileInputRef.current?.click()}
-          onExport={handleExport}
-          onDeleteAll={() => {
-            if (confirm(`PERIGO: Isso apagará TODOS os registros de ${activeTab === 'assets' ? 'imobilizados' : 'veículos'}.`)) {
-              if (activeTab === 'assets') { onAssetsChange([]); clearRemoteStorage('assets'); }
-              else { onVehiclesChange([]); clearRemoteStorage('vehicles'); }
-            }
-          }}
-          onResync={onResync}
-        />
+        {/* TOOLBAR */}
+        <div className="p-4 bg-white border-b border-slate-200 flex flex-col md:flex-row gap-4 justify-between items-end md:items-center">
+          <div className="relative w-full md:w-1/3">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Search className="h-4 w-4 text-gray-400" /></div>
+            <input type="text" placeholder={`Buscar...`} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 block w-full rounded-md border-gray-300 bg-slate-50 border p-2 text-sm focus:ring-blue-500 focus:border-blue-500" />
+          </div>
+          <div className="flex gap-2 w-full md:w-auto">
+            <input type="file" accept=".xlsx, .xls" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
+            <button onClick={handleImportClick} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-emerald-600 text-white px-3 py-2 rounded-md hover:bg-emerald-700 text-sm font-medium"><Download size={16} /> <span className="hidden sm:inline">Importar</span></button>
+            <button onClick={handleExport} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 text-sm font-medium"><Upload size={16} /> <span className="hidden sm:inline">Exportar</span></button>
+            <button onClick={handleDeleteAll} className="flex-1 md:flex-none flex items-center justify-center gap-2 text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-md text-sm font-medium"><Trash2 size={16} /> <span className="hidden sm:inline">Limpar</span></button>
+          </div>
+        </div>
 
+        {/* CONTENT */}
         <div className="flex-1 overflow-y-auto bg-slate-50 p-4">
-          <AdminManualAdd
-            activeTab={activeTab}
-            newAsset={newAsset} setNewAsset={setNewAsset}
-            newVehicle={newVehicle} setNewVehicle={setNewVehicle}
-            onAdd={handleAddManual}
-          />
-          <AdminDataTable
-            activeTab={activeTab}
-            data={getFilteredData()}
-            editingId={editingId}
-            editValues={editValues}
-            onStartEdit={handleStartEdit}
-            onCancelEdit={() => setEditingId(null)}
-            onSaveEdit={handleSaveEdit}
-            onDeleteItem={(id) => {
-              if (confirm("Excluir este item?")) {
-                if (activeTab === 'assets') onDeleteAsset ? onDeleteAsset(id) : onAssetsChange(assets.filter(a => getAssetId(a) !== id));
-                else onDeleteVehicle ? onDeleteVehicle(id) : onVehiclesChange(vehicles.filter(v => v.plate !== id));
-              }
-            }}
-            onEditValueChange={(f, v) => setEditValues({ ...editValues, [f]: v })}
-            getAssetId={getAssetId}
-          />
+          {/* ADD MANUAL */}
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6">
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2"><Plus size={14} /> Adicionar Manualmente</h3>
+            {activeTab === 'assets' ? (
+              <div className="flex flex-col md:flex-row gap-3">
+                <input type="text" placeholder="Código Fiscal" className={`${inputStyle} w-full md:w-48`} value={newAsset.fiscalCode} onChange={e => setNewAsset({ ...newAsset, fiscalCode: e.target.value })} />
+                <input type="text" placeholder="Patrimônio" className={`${inputStyle} w-full md:w-48`} value={newAsset.patrimony} onChange={e => setNewAsset({ ...newAsset, patrimony: e.target.value })} />
+                <input type="text" placeholder="Descrição" className={`${inputStyle} w-full md:flex-1`} value={newAsset.description} onChange={e => setNewAsset({ ...newAsset, description: e.target.value })} />
+                <button onClick={handleAddManual} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition flex items-center justify-center"><Save size={18} /></button>
+              </div>
+            ) : (
+              <div className="flex flex-col md:flex-row gap-3">
+                <input type="text" placeholder="Placa" className={`${inputStyle} w-full md:w-48`} value={newVehicle.plate} onChange={e => setNewVehicle({ ...newVehicle, plate: e.target.value })} />
+                <input type="text" placeholder="Modelo" className={`${inputStyle} w-full md:flex-1`} value={newVehicle.model} onChange={e => setNewVehicle({ ...newVehicle, model: e.target.value })} />
+                <input type="text" placeholder="Unidade" className={`${inputStyle} w-full md:w-48`} value={newVehicle.unit} onChange={e => setNewVehicle({ ...newVehicle, unit: e.target.value })} />
+                <input type="text" placeholder="Setor" className={`${inputStyle} w-full md:w-48`} value={newVehicle.sector} onChange={e => setNewVehicle({ ...newVehicle, sector: e.target.value })} />
+                <button onClick={handleAddManual} className="grow-0 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition flex items-center justify-center h-10 self-end md:self-auto"><Save size={18} /></button>
+              </div>
+            )}
+          </div>
+
+          {/* TABLE */}
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-slate-100">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase w-32">{activeTab === 'assets' ? 'Cód. Fiscal' : 'Placa'}</th>
+                  {activeTab === 'assets' && (
+                    <th className="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase w-48">Patrimônio</th>
+                  )}
+                  <th className="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase">{activeTab === 'assets' ? 'Descrição' : 'Modelo'}</th>
+                  {activeTab === 'vehicles' && (
+                    <>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase w-48">Unidade</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase w-48">Setor</th>
+                    </>
+                  )}
+                  <th className="px-6 py-3 text-right text-xs font-bold text-slate-600 uppercase w-32">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredList.map((item, idx) => {
+                  const id = activeTab === 'assets' ? getAssetId(item as Asset) : (item as Vehicle).plate;
+                  const val1 = activeTab === 'assets' ? (item as Asset).fiscalCode : (item as Vehicle).plate;
+                  const val2 = activeTab === 'assets' ? (item as Asset).patrimony : (item as Vehicle).model;
+                  const val3 = activeTab === 'assets' ? (item as Asset).description : (item as Vehicle).unit;
+                  const val4 = activeTab === 'vehicles' ? (item as Vehicle).sector : undefined;
+                  const isEditing = editingId === id;
+
+                  return (
+                    <tr key={idx} className={`${isEditing ? 'bg-blue-50/50' : 'hover:bg-slate-50'} transition-colors`}>
+                      <td className="px-6 py-3 text-sm">
+                        {isEditing ? (
+                          <input type="text" className="w-full border p-1 rounded font-mono uppercase bg-white text-slate-900" value={editValues.field1} onChange={e => setEditValues({ ...editValues, field1: e.target.value })} />
+                        ) : (
+                          <span className="font-mono text-slate-900">{val1}</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-3 text-sm">
+                        {isEditing ? (
+                          <input type="text" className="w-full border p-1 rounded bg-white text-slate-900" value={editValues.field2} onChange={e => setEditValues({ ...editValues, field2: e.target.value })} />
+                        ) : (
+                          <span className="text-slate-700">{val2}</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-3 text-sm">
+                        {isEditing ? (
+                          <input type="text" className="w-full border p-1 rounded bg-white text-slate-900" value={editValues.field3} onChange={e => setEditValues({ ...editValues, field3: e.target.value })} />
+                        ) : (
+                          <span className="text-slate-700">{val3}</span>
+                        )}
+                      </td>
+                      {activeTab === 'vehicles' && (
+                        <td className="px-6 py-3 text-sm">
+                          {isEditing ? (
+                            <input type="text" className="w-full border p-1 rounded bg-white text-slate-900" value={editValues.field4} onChange={e => setEditValues({ ...editValues, field4: e.target.value })} />
+                          ) : (
+                            <span className="text-slate-700">{val4}</span>
+                          )}
+                        </td>
+                      )}
+                      <td className="px-6 py-3 text-right space-x-2">
+                        {isEditing ? (
+                          <>
+                            <button onClick={() => saveEdit(id)} className="text-emerald-600 hover:text-emerald-800 p-1" title="Salvar"><Check size={18} /></button>
+                            <button onClick={cancelEditing} className="text-slate-400 hover:text-slate-600 p-1" title="Cancelar"><X size={18} /></button>
+                          </>
+                        ) : (
+                          <>
+                            <button onClick={() => startEditing(id, val1, val2, val3, val4)} className="text-blue-500 hover:text-blue-700 p-1" title="Editar"><Edit size={18} /></button>
+                            <button onClick={() => handleDeleteItem(id)} className="text-gray-400 hover:text-red-600 p-1" title="Excluir"><Trash2 size={18} /></button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {filteredList.length === 0 && <div className="p-10 text-center text-slate-400 text-sm">Nenhum registro encontrado.</div>}
+          </div>
         </div>
-        <input type="file" accept=".xlsx, .xls" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
       </div>
     </div>
   );

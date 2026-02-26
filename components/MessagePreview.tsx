@@ -2,13 +2,13 @@ import React from 'react';
 import {
     ArrowLeft, Copy, Send, CheckCircle2, Save, Trash2
 } from 'lucide-react';
-import { TripFormData, SelectedAsset, Asset, Vehicle } from '../types';
+import { TripFormData, SelectedAsset } from '../types';
 
 interface MessagePreviewProps {
     formData: TripFormData;
     selectedAssets: SelectedAsset[];
-    assets: Asset[];
-    vehicles: Vehicle[];
+    assets: any[];
+    vehicles: any[];
     onBack: () => void;
     onCopy: () => void;
     onSendWhatsApp: () => void;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { TripFormData, SelectedAsset, HistoryItem, Asset, Vehicle } from './types';
+import { ASSETS as INITIAL_ASSETS, VEHICLES as INITIAL_VEHICLES } from './constants';
 import { AssetRow } from './components/AssetRow';
 import { HistoryModal } from './components/HistoryModal';
 import { AdminPanel } from './components/AdminPanel';
@@ -59,89 +60,31 @@ function AppContent() {
     return sessionStorage.getItem('transport_app_admin_auth') === 'true';
   });
 
-  // Load Initial Assets/Vehicles with delta-sync and LWW
+  // Load Initial Assets/Vehicles with hybrid sync
   useEffect(() => {
     const initData = async () => {
       // 1. Load from LocalStorage (Immediate UI)
       const savedAssets = localStorage.getItem('transport_app_assets');
       const savedVehicles = localStorage.getItem('transport_app_vehicles');
-      const lastSync = localStorage.getItem('transport_app_last_sync') || undefined;
 
-      let currentAssets: Asset[] = savedAssets ? JSON.parse(savedAssets) : [];
-      let currentVehicles: Vehicle[] = savedVehicles ? JSON.parse(savedVehicles) : [];
+      if (savedAssets) setAssets(JSON.parse(savedAssets));
+      else setAssets(INITIAL_ASSETS);
 
-      if (currentAssets.length > 0) setAssets(currentAssets);
-      if (currentVehicles.length > 0) setVehicles(currentVehicles);
+      if (savedVehicles) setVehicles(JSON.parse(savedVehicles));
+      else setVehicles(INITIAL_VEHICLES);
 
-      // 2. Delta Pull from Supabase (Source of Truth)
+      // 2. Pull from Supabase (Source of Truth)
       try {
-        const remoteData = await pullData(lastSync);
-
-        // Merge Assets (LWW)
-        if (remoteData.assets.length > 0) {
-          const mergedAssets = [...currentAssets];
-          remoteData.assets.forEach(remoteAsset => {
-            const index = mergedAssets.findIndex(a =>
-              a.fiscalCode === remoteAsset.fiscalCode && a.patrimony === remoteAsset.patrimony
-            );
-
-            if (index >= 0) {
-              // Only update if remote is newer or local has no updatedAt
-              const localUpdateAt = mergedAssets[index].updatedAt || '1970-01-01';
-              const remoteUpdateAt = remoteAsset.updatedAt || '1970-01-01';
-              if (remoteUpdateAt >= localUpdateAt) {
-                mergedAssets[index] = remoteAsset;
-              }
-            } else {
-              mergedAssets.push(remoteAsset);
-            }
-          });
-          setAssets(mergedAssets);
-          localStorage.setItem('transport_app_assets', JSON.stringify(mergedAssets));
-        }
-
-        // Merge Vehicles (LWW)
-        if (remoteData.vehicles.length > 0) {
-          const mergedVehicles = [...currentVehicles];
-          remoteData.vehicles.forEach(remoteVehicle => {
-            const index = mergedVehicles.findIndex(v => v.plate === remoteVehicle.plate);
-
-            if (index >= 0) {
-              const localUpdateAt = mergedVehicles[index].updatedAt || '1970-01-01';
-              const remoteUpdateAt = remoteVehicle.updatedAt || '1970-01-01';
-              if (remoteUpdateAt >= localUpdateAt) {
-                mergedVehicles[index] = remoteVehicle;
-              }
-            } else {
-              mergedVehicles.push(remoteVehicle);
-            }
-          });
-          setVehicles(mergedVehicles);
-          localStorage.setItem('transport_app_vehicles', JSON.stringify(mergedVehicles));
-        }
-
-        if (remoteData.assets.length > 0 || remoteData.vehicles.length > 0) {
-          localStorage.setItem('transport_app_last_sync', remoteData.timestamp);
-          triggerToast('Dados atualizados com a nuvem.');
-        } else if (lastSync) {
-          triggerToast('Sincronizado (sem alterações).');
-        } else {
-          localStorage.setItem('transport_app_last_sync', remoteData.timestamp);
-        }
+        const remoteData = await pullData();
+        if (remoteData.assets.length > 0) setAssets(remoteData.assets);
+        if (remoteData.vehicles.length > 0) setVehicles(remoteData.vehicles);
+        triggerToast('Dados sincronizados com a nuvem.');
       } catch (err) {
-        console.warn('Falha na sincronização delta (offline?).');
+        console.warn('Falha na sincronização inicial (offline?).');
       }
     };
     initData();
   }, [pullData]);
-
-  const handleResync = useCallback(async () => {
-    if (!window.confirm('Forçar sincronização total? Isso atualizará todos os itens com os dados da nuvem.')) return;
-    localStorage.removeItem('transport_app_last_sync');
-    // We can't easily trigger the useEffect again without a dependency change or manual call
-    // Let's just reload the page or call a sync function
-    window.location.reload();
-  }, []);
 
   // Handle data persistence (Local + Supabase)
   const updateAssets = useCallback(async (newAssets: Asset[]) => {
@@ -149,8 +92,8 @@ function AppContent() {
     localStorage.setItem('transport_app_assets', JSON.stringify(newAssets));
     try {
       await pushAssets(newAssets);
-    } catch (err: unknown) {
-      triggerToast(`Aviso: Salvo apenas localmente (Erro: ${(err as Error).message || 'Cloud Error'}).`);
+    } catch (err: any) {
+      triggerToast(`Aviso: Salvo apenas localmente (Erro: ${err.message || 'Cloud Error'}).`);
     }
   }, [pushAssets]);
 
@@ -159,8 +102,8 @@ function AppContent() {
     localStorage.setItem('transport_app_vehicles', JSON.stringify(newVehicles));
     try {
       await pushVehicles(newVehicles);
-    } catch (err: unknown) {
-      triggerToast(`Aviso: Salvo apenas localmente (Erro: ${(err as Error).message || 'Cloud Error'}).`);
+    } catch (err: any) {
+      triggerToast(`Aviso: Salvo apenas localmente (Erro: ${err.message || 'Cloud Error'}).`);
     }
   }, [pushVehicles]);
 
@@ -196,10 +139,10 @@ function AppContent() {
   const loadHistoryItem = (item: HistoryItem) => {
     setFormData(item.formData);
     // Migrate old 'assetCode' to 'assetFiscalCode' if necessary
-    const migratedAssets = item.selectedAssets.map((a: SelectedAsset) => ({
+    const migratedAssets = item.selectedAssets.map((a: any) => ({
       ...a,
       id: crypto.randomUUID(),
-      assetFiscalCode: a.assetFiscalCode || (a as any).assetCode || '' // Still need cast for old history migration
+      assetFiscalCode: a.assetFiscalCode || a.assetCode || ''
     }));
     setSelectedAssets(migratedAssets);
     setIsPreviewMode(false);
@@ -333,7 +276,6 @@ function AppContent() {
           onDeleteVehicle={deleteVehicle}
           isAuthenticated={isAdminAuthenticated}
           onLogin={() => setIsAdminAuthenticated(true)}
-          onResync={handleResync}
         />
       )}
 
