@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { TripFormData, SelectedAsset, HistoryItem, Asset, Vehicle } from './types';
-import { ASSETS as INITIAL_ASSETS, VEHICLES as INITIAL_VEHICLES } from './constants';
+import { ASSETS as INITIAL_ASSETS, VEHICLES as INITIAL_VEHICLES } from '@/constants';
 import { AssetRow } from './components/AssetRow';
 import { HistoryModal } from './components/HistoryModal';
 import { AdminPanel } from './components/AdminPanel';
