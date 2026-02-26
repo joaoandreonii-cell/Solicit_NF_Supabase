@@ -98,7 +98,7 @@ export const TripForm: React.FC<TripFormProps> = ({
                                 value={formData.workName}
                                 onChange={handleInputChange}
                                 className={`mt-1 block w-full bg-white text-slate-900 rounded-md shadow-sm focus:ring-blue-500 border p-2 ${errors.workName ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
-                                placeholder="Ex: PCH Linha Rica"
+                                placeholder="Ex: Specht"
                                 aria-invalid={!!errors.workName}
                                 aria-describedby={errors.workName ? "workName-error" : undefined}
                             />
