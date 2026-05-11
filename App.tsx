@@ -16,6 +16,7 @@ import { useTripForm } from './hooks/useTripForm';
 import { useHistory } from './hooks/useHistory';
 import { useFavorites } from './hooks/useFavorites';
 import { useSync } from './hooks/useSync';
+import { useNetworkStatus } from './hooks/useNetworkStatus';
 import { Analytics } from '@vercel/analytics/react';
 
 const getInitialForm = (): TripFormData => ({
@@ -43,7 +44,8 @@ function AppContent() {
 
   const { history, saveToHistory, deleteHistoryItem } = useHistory();
   const { favorites, toggleFavorite, isFavorite, removeFromFavorites } = useFavorites();
-  const { isSyncing, pullData, pushAssets, pushVehicles, deleteFromRemote } = useSync();
+  const { isSyncing, pullData, pushAssets, pushVehicles, deleteFromRemote, flushQueue } = useSync();
+  const isOnline = useNetworkStatus(flushQueue);
 
   const [showToast, setShowToast] = useState<{ show: boolean, message: string }>({ show: false, message: '' });
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -277,6 +279,13 @@ function AppContent() {
           isAuthenticated={isAdminAuthenticated}
           onLogin={() => setIsAdminAuthenticated(true)}
         />
+      )}
+
+      {/* Offline Banner */}
+      {!isOnline && (
+        <div className="fixed top-0 inset-x-0 z-[110] bg-amber-500 text-white text-center text-sm py-1.5 font-medium shadow">
+          Sem conexão — dados salvos localmente
+        </div>
       )}
 
       {/* Toast Notification */}
