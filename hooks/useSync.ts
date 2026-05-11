@@ -42,9 +42,10 @@ export const useSync = () => {
     const pullData = useCallback(async () => {
         setIsSyncing(true);
         try {
+            // RPC bypasses PostgREST's server-side row limit (default 1000)
             const [{ data: remoteAssets }, { data: remoteVehicles }] = await Promise.all([
-                supabase.from('assets-cmi').select('*').limit(3000),
-                supabase.from('vehicles-cmi').select('*').limit(3000)
+                supabase.rpc('get_all_assets_cmi'),
+                supabase.rpc('get_all_vehicles_cmi')
             ]);
 
             const formattedAssets: Asset[] = (remoteAssets || []).map(a => ({
