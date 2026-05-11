@@ -324,10 +324,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     if (confirm(`PERIGO: Isso apagará TODOS os ${label} do banco de dados.`)) {
       if (activeTab === 'assets') {
         onAssetsChange([]);
-        clearRemoteStorage('assets');
+        clearRemoteStorage('assets-cmi');
       } else {
         onVehiclesChange([]);
-        clearRemoteStorage('vehicles');
+        clearRemoteStorage('vehicles-cmi');
       }
     }
   };

@@ -112,7 +112,7 @@ function AppContent() {
     setAssets(updated);
     localStorage.setItem('transport_app_assets', JSON.stringify(updated));
     try {
-      await deleteFromRemote('assets', id);
+      await deleteFromRemote('assets-cmi', id);
       triggerToast('Item excluído da nuvem.');
     } catch (err) {
       triggerToast('Erro ao excluir da nuvem.');
@@ -124,7 +124,7 @@ function AppContent() {
     setVehicles(updated);
     localStorage.setItem('transport_app_vehicles', JSON.stringify(updated));
     try {
-      await deleteFromRemote('vehicles', plate);
+      await deleteFromRemote('vehicles-cmi', plate);
       triggerToast('Veículo excluído da nuvem.');
     } catch (err) {
       triggerToast('Erro ao excluir da nuvem.');

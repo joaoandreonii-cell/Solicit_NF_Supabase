@@ -9,8 +9,8 @@ export const useSync = () => {
         setIsSyncing(true);
         try {
             const [{ data: remoteAssets }, { data: remoteVehicles }] = await Promise.all([
-                supabase.from('assets').select('*'),
-                supabase.from('vehicles').select('*')
+                supabase.from('assets-cmi').select('*'),
+                supabase.from('vehicles-cmi').select('*')
             ]);
 
             const formattedAssets: Asset[] = (remoteAssets || []).map(a => ({
@@ -47,7 +47,7 @@ export const useSync = () => {
             }));
 
             // Upsert assets using RPC to handle conditional logic (updated_at check)
-            const { error } = await supabase.rpc('upsert_assets', { assets_json: formatted });
+            const { error } = await supabase.rpc('upsert_assets_cmi', { assets_json: formatted });
 
             if (error) throw error;
         } catch (error) {
@@ -71,7 +71,7 @@ export const useSync = () => {
             }));
 
             // Upsert vehicles using RPC to handle conditional logic (updated_at check)
-            const { error } = await supabase.rpc('upsert_vehicles', { vehicles_json: formatted });
+            const { error } = await supabase.rpc('upsert_vehicles_cmi', { vehicles_json: formatted });
 
             if (error) throw error;
         } catch (error) {
@@ -82,7 +82,7 @@ export const useSync = () => {
         }
     }, []);
 
-    const clearRemoteStorage = useCallback(async (table: 'assets' | 'vehicles') => {
+    const clearRemoteStorage = useCallback(async (table: 'assets-cmi' | 'vehicles-cmi') => {
         setIsSyncing(true);
         try {
             // Warning: This deletes everything in the table
@@ -96,10 +96,10 @@ export const useSync = () => {
         }
     }, []);
 
-    const deleteFromRemote = useCallback(async (table: 'assets' | 'vehicles', id: string) => {
+    const deleteFromRemote = useCallback(async (table: 'assets-cmi' | 'vehicles-cmi', id: string) => {
         setIsSyncing(true);
         try {
-            if (table === 'assets') {
+            if (table === 'assets-cmi') {
                 const [fCode, patrimony] = id.split('|');
                 const { error } = await supabase
                     .from(table)
