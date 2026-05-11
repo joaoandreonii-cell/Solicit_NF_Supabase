@@ -43,8 +43,8 @@ export const useSync = () => {
         setIsSyncing(true);
         try {
             const [{ data: remoteAssets }, { data: remoteVehicles }] = await Promise.all([
-                supabase.from('assets-cmi').select('*'),
-                supabase.from('vehicles-cmi').select('*')
+                supabase.from('assets-cmi').select('*').limit(3000),
+                supabase.from('vehicles-cmi').select('*').limit(3000)
             ]);
 
             const formattedAssets: Asset[] = (remoteAssets || []).map(a => ({
