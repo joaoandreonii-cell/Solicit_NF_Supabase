@@ -10,13 +10,17 @@ import { MessagePreview } from './components/MessagePreview';
 import { FavoritesModal } from './components/FavoritesModal';
 import {
   CheckCircle,
-  RotateCcw
+  RotateCcw,
+  Download,
+  X,
+  Share2
 } from 'lucide-react';
 import { useTripForm } from './hooks/useTripForm';
 import { useHistory } from './hooks/useHistory';
 import { useFavorites } from './hooks/useFavorites';
 import { useSync } from './hooks/useSync';
 import { useNetworkStatus } from './hooks/useNetworkStatus';
+import { useInstallPrompt } from './hooks/useInstallPrompt';
 import { Analytics } from '@vercel/analytics/react';
 
 const getInitialForm = (): TripFormData => ({
@@ -46,6 +50,8 @@ function AppContent() {
   const { favorites, toggleFavorite, isFavorite, removeFromFavorites } = useFavorites();
   const { isSyncing, pullData, pushAssets, pushVehicles, deleteFromRemote, flushQueue } = useSync();
   const isOnline = useNetworkStatus(flushQueue);
+  const { canInstall, install, isIOS } = useInstallPrompt();
+  const [installDismissed, setInstallDismissed] = useState(false);
 
   const [showToast, setShowToast] = useState<{ show: boolean, message: string }>({ show: false, message: '' });
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -285,6 +291,38 @@ function AppContent() {
       {!isOnline && (
         <div className="fixed top-0 inset-x-0 z-[110] bg-amber-500 text-white text-center text-sm py-1.5 font-medium shadow">
           Sem conexão — dados salvos localmente
+        </div>
+      )}
+
+      {/* Install Banner */}
+      {canInstall && !installDismissed && (
+        <div className="fixed bottom-6 left-4 right-4 z-[100] max-w-sm mx-auto bg-white border border-blue-100 rounded-2xl shadow-xl p-4 flex items-center gap-3">
+          <div className="w-11 h-11 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+            {isIOS ? <Share2 className="w-5 h-5 text-white" /> : <Download className="w-5 h-5 text-white" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-slate-800">Instalar App</p>
+            {isIOS ? (
+              <p className="text-xs text-slate-500 leading-tight">Toque em <strong>Compartilhar</strong> → <strong>Adicionar à Tela de Início</strong></p>
+            ) : (
+              <p className="text-xs text-slate-500">Acesse offline, direto da tela inicial</p>
+            )}
+          </div>
+          {!isIOS && (
+            <button
+              onClick={() => install().then(ok => ok && setInstallDismissed(true))}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg flex-shrink-0 transition-colors"
+            >
+              Instalar
+            </button>
+          )}
+          <button
+            onClick={() => setInstallDismissed(true)}
+            className="text-slate-400 hover:text-slate-600 flex-shrink-0 ml-1 transition-colors"
+            aria-label="Fechar"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
