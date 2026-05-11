@@ -239,7 +239,7 @@ function AppContent() {
   const handleSendWhatsApp = () => {
     const text = generateMessageText();
     const encodedText = encodeURIComponent(text);
-    window.open(`https://wa.me/554991109940?text=${encodedText}`, '_blank');
+    window.open(`https://wa.me/?text=${encodedText}`, '_blank');
     handleSaveToHistory(false);
   };
 
