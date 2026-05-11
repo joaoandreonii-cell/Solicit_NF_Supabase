@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { Asset, Vehicle } from '../types';
 import { useSync } from '../hooks/useSync';
+import { ASSETS_TABLE, VEHICLES_TABLE } from '../lib/sector';
 import {
   Trash2,
   Upload,
@@ -324,10 +325,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     if (confirm(`PERIGO: Isso apagará TODOS os ${label} do banco de dados.`)) {
       if (activeTab === 'assets') {
         onAssetsChange([]);
-        clearRemoteStorage('assets-cmi');
+        clearRemoteStorage(ASSETS_TABLE);
       } else {
         onVehiclesChange([]);
-        clearRemoteStorage('vehicles-cmi');
+        clearRemoteStorage(VEHICLES_TABLE);
       }
     }
   };

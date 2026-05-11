@@ -1,6 +1,11 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Asset, Vehicle } from '../types';
+import {
+    ASSETS_TABLE, VEHICLES_TABLE,
+    RPC_GET_ASSETS, RPC_GET_VEHICLES,
+    RPC_PUSH_ASSETS, RPC_PUSH_VEHICLES,
+} from '../lib/sector';
 
 // ---------------------------------------------------------------------------
 // Sync queue — persists failed remote ops and retries on reconnect
@@ -11,7 +16,7 @@ const QUEUE_KEY = 'transport_app_sync_queue';
 type QueuedOp =
     | { type: 'pushAssets' }
     | { type: 'pushVehicles' }
-    | { type: 'delete'; table: 'assets-cmi' | 'vehicles-cmi'; id: string };
+    | { type: 'delete'; table: string; id: string };
 
 function loadQueue(): QueuedOp[] {
     try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch { return []; }
@@ -24,7 +29,6 @@ function saveQueue(q: QueuedOp[]) {
 function enqueue(op: QueuedOp) {
     const q = loadQueue();
     if (op.type === 'pushAssets' || op.type === 'pushVehicles') {
-        // One entry per type is enough — on flush we read current localStorage
         if (!q.some(o => o.type === op.type)) q.push(op);
     } else {
         q.push(op);
@@ -42,23 +46,23 @@ export const useSync = () => {
     const pullData = useCallback(async () => {
         setIsSyncing(true);
         try {
-            // RPC bypasses PostgREST's server-side row limit (default 1000)
+            // RETURNS jsonb RPCs bypass PostgREST's server-side row limit
             const [{ data: remoteAssets }, { data: remoteVehicles }] = await Promise.all([
-                supabase.rpc('get_all_assets_cmi'),
-                supabase.rpc('get_all_vehicles_cmi')
+                supabase.rpc(RPC_GET_ASSETS),
+                supabase.rpc(RPC_GET_VEHICLES),
             ]);
 
-            const formattedAssets: Asset[] = (remoteAssets || []).map(a => ({
+            const formattedAssets: Asset[] = ((remoteAssets as any[]) || []).map(a => ({
                 fiscalCode: a.fiscal_code,
                 patrimony: a.patrimony,
-                description: a.description
+                description: a.description,
             }));
 
-            const formattedVehicles: Vehicle[] = (remoteVehicles || []).map(v => ({
+            const formattedVehicles: Vehicle[] = ((remoteVehicles as any[]) || []).map(v => ({
                 plate: v.plate,
                 model: v.model,
                 unit: v.unit,
-                sector: v.sector
+                sector: v.sector,
             }));
 
             return { assets: formattedAssets, vehicles: formattedVehicles };
@@ -78,10 +82,9 @@ export const useSync = () => {
                 fiscal_code: a.fiscalCode,
                 patrimony: a.patrimony,
                 description: a.description,
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
             }));
-
-            const { error } = await supabase.rpc('upsert_assets_cmi', { assets_json: formatted });
+            const { error } = await supabase.rpc(RPC_PUSH_ASSETS, { assets_json: formatted });
             if (error) throw error;
         } catch (error) {
             enqueue({ type: 'pushAssets' });
@@ -101,10 +104,9 @@ export const useSync = () => {
                 model: v.model,
                 unit: v.unit,
                 sector: v.sector,
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
             }));
-
-            const { error } = await supabase.rpc('upsert_vehicles_cmi', { vehicles_json: formatted });
+            const { error } = await supabase.rpc(RPC_PUSH_VEHICLES, { vehicles_json: formatted });
             if (error) throw error;
         } catch (error) {
             enqueue({ type: 'pushVehicles' });
@@ -115,7 +117,7 @@ export const useSync = () => {
         }
     }, []);
 
-    const clearRemoteStorage = useCallback(async (table: 'assets-cmi' | 'vehicles-cmi') => {
+    const clearRemoteStorage = useCallback(async (table: string) => {
         setIsSyncing(true);
         try {
             const { error } = await supabase.from(table).delete().neq('updated_at', '1970-01-01');
@@ -128,22 +130,18 @@ export const useSync = () => {
         }
     }, []);
 
-    const deleteFromRemote = useCallback(async (table: 'assets-cmi' | 'vehicles-cmi', id: string) => {
+    const deleteFromRemote = useCallback(async (table: string, id: string) => {
         setIsSyncing(true);
         try {
-            if (table === 'assets-cmi') {
+            if (table === ASSETS_TABLE) {
                 const [fCode, patrimony] = id.split('|');
                 const { error } = await supabase
-                    .from(table)
-                    .delete()
-                    .eq('fiscal_code', fCode)
-                    .eq('patrimony', patrimony);
+                    .from(table).delete()
+                    .eq('fiscal_code', fCode).eq('patrimony', patrimony);
                 if (error) throw error;
             } else {
                 const { error } = await supabase
-                    .from(table)
-                    .delete()
-                    .eq('plate', id);
+                    .from(table).delete().eq('plate', id);
                 if (error) throw error;
             }
         } catch (error) {
@@ -155,7 +153,6 @@ export const useSync = () => {
         }
     }, []);
 
-    // Retry all queued operations — called automatically on reconnect
     const flushQueue = useCallback(async () => {
         const queue = loadQueue();
         if (queue.length === 0) return;
@@ -173,9 +170,9 @@ export const useSync = () => {
                                 fiscal_code: a.fiscalCode,
                                 patrimony: a.patrimony,
                                 description: a.description,
-                                updated_at: new Date().toISOString()
+                                updated_at: new Date().toISOString(),
                             }));
-                            const { error } = await supabase.rpc('upsert_assets_cmi', { assets_json: formatted });
+                            const { error } = await supabase.rpc(RPC_PUSH_ASSETS, { assets_json: formatted });
                             if (error) throw error;
                         }
                     } else if (op.type === 'pushVehicles') {
@@ -183,17 +180,15 @@ export const useSync = () => {
                         if (raw) {
                             const vehicles: Vehicle[] = JSON.parse(raw);
                             const formatted = vehicles.map(v => ({
-                                plate: v.plate,
-                                model: v.model,
-                                unit: v.unit,
-                                sector: v.sector,
-                                updated_at: new Date().toISOString()
+                                plate: v.plate, model: v.model,
+                                unit: v.unit, sector: v.sector,
+                                updated_at: new Date().toISOString(),
                             }));
-                            const { error } = await supabase.rpc('upsert_vehicles_cmi', { vehicles_json: formatted });
+                            const { error } = await supabase.rpc(RPC_PUSH_VEHICLES, { vehicles_json: formatted });
                             if (error) throw error;
                         }
                     } else if (op.type === 'delete') {
-                        if (op.table === 'assets-cmi') {
+                        if (op.table === ASSETS_TABLE) {
                             const [fCode, patrimony] = op.id.split('|');
                             const { error } = await supabase
                                 .from(op.table).delete()
@@ -206,7 +201,7 @@ export const useSync = () => {
                         }
                     }
                 } catch {
-                    remaining.push(op); // keep failed ops for next reconnect
+                    remaining.push(op);
                 }
             }
         } finally {

@@ -21,6 +21,7 @@ import { useFavorites } from './hooks/useFavorites';
 import { useSync } from './hooks/useSync';
 import { useNetworkStatus } from './hooks/useNetworkStatus';
 import { useInstallPrompt } from './hooks/useInstallPrompt';
+import { ASSETS_TABLE, VEHICLES_TABLE } from './lib/sector';
 import { Analytics } from '@vercel/analytics/react';
 
 const getInitialForm = (): TripFormData => ({
@@ -120,7 +121,7 @@ function AppContent() {
     setAssets(updated);
     localStorage.setItem('transport_app_assets', JSON.stringify(updated));
     try {
-      await deleteFromRemote('assets-cmi', id);
+      await deleteFromRemote(ASSETS_TABLE, id);
       triggerToast('Item excluído da nuvem.');
     } catch (err) {
       triggerToast('Erro ao excluir da nuvem.');
@@ -132,7 +133,7 @@ function AppContent() {
     setVehicles(updated);
     localStorage.setItem('transport_app_vehicles', JSON.stringify(updated));
     try {
-      await deleteFromRemote('vehicles-cmi', plate);
+      await deleteFromRemote(VEHICLES_TABLE, plate);
       triggerToast('Veículo excluído da nuvem.');
     } catch (err) {
       triggerToast('Erro ao excluir da nuvem.');
